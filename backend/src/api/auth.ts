@@ -1,11 +1,34 @@
 import { Request, Response } from 'express';
 import { TelegramAuthService } from '../services/telegram-auth';
 import { generateToken } from '../services/jwt';
-import { db } from '../config/firebase';
 
 export async function authHandler(req: Request, res: Response): Promise<void> {
   try {
-    // Parse request body
+    // DEV MODE: Bypass Telegram authentication for local testing
+    if (process.env.NODE_ENV === 'development' && process.env.DEV_BYPASS_AUTH === 'true') {
+      console.log('⚠️  DEV MODE: Bypassing Telegram authentication');
+      const mockUser = {
+        id: 123456789,
+        first_name: 'Dev',
+        last_name: 'User',
+        username: 'devuser',
+      };
+
+      const token = generateToken({
+        userId: mockUser.id.toString(),
+        username: mockUser.username,
+        firstName: mockUser.first_name,
+      });
+
+      res.json({
+        authenticated: true,
+        token,
+        user: mockUser,
+      });
+      return;
+    }
+
+    // Production: Validate Telegram initData
     const { initData } = req.body;
 
     if (!initData) {
@@ -13,7 +36,6 @@ export async function authHandler(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Validate initData
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
       res.status(500).json({ error: 'Bot token not configured' });
@@ -23,34 +45,9 @@ export async function authHandler(req: Request, res: Response): Promise<void> {
     const authService = new TelegramAuthService(botToken);
     const user = await authService.validateInitData(initData);
 
-    // Save/update user in Firestore
-    const userId = user.id.toString();
-    const userDoc = {
-      id: userId,
-      username: user.username || '',
-      firstName: user.first_name,
-      lastName: user.last_name || '',
-      photoUrl: user.photo_url || '',
-      languageCode: user.language_code || 'en',
-      isPremium: user.is_premium || false,
-      updatedAt: new Date().toISOString(),
-    };
-
-    const userRef = db.collection('users').doc(userId);
-    const existingUser = await userRef.get();
-
-    if (existingUser.exists) {
-      await userRef.update(userDoc);
-    } else {
-      await userRef.set({
-        ...userDoc,
-        createdAt: new Date().toISOString(),
-      });
-    }
-
     // Generate JWT token
     const token = generateToken({
-      userId,
+      userId: user.id.toString(),
       username: user.username || '',
       firstName: user.first_name,
     });

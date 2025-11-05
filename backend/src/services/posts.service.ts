@@ -1,8 +1,10 @@
-import { db } from '../config/firebase';
 import type { PostDocument } from '../types';
+import { mockDb } from '../config/mock-db';
+
+const isDevelopment = process.env.NODE_ENV === 'development' && process.env.DEV_BYPASS_AUTH === 'true';
 
 export class PostsService {
-  private readonly collection = db.collection('posts');
+  private readonly useMockDb = isDevelopment;
 
   /**
    * Create a new post
@@ -19,7 +21,13 @@ export class PostsService {
       author,
     };
 
-    const docRef = await this.collection.add(postData);
+    if (this.useMockDb) {
+      return mockDb.createPost(postData);
+    }
+
+    const { db } = await import('../config/firebase');
+    const collection = db.collection('posts');
+    const docRef = await collection.add(postData);
     const post = { id: docRef.id, ...postData };
 
     return post;
@@ -32,12 +40,27 @@ export class PostsService {
     posts: PostDocument[];
     nextCursor?: string;
   }> {
-    let query = this.collection
+    if (this.useMockDb) {
+      const posts = await mockDb.getPosts(limit + 1, startAfter);
+      const hasMore = posts.length > limit;
+      if (hasMore) {
+        posts.pop();
+      }
+      const result: { posts: PostDocument[]; nextCursor?: string } = { posts };
+      if (hasMore && posts.length > 0) {
+        result.nextCursor = posts[posts.length - 1].id;
+      }
+      return result;
+    }
+
+    const { db } = await import('../config/firebase');
+    const collection = db.collection('posts');
+    let query = collection
       .orderBy('createdAt', 'desc')
-      .limit(limit + 1); // Get one extra to check if there are more
+      .limit(limit + 1);
 
     if (startAfter) {
-      const startDoc = await this.collection.doc(startAfter).get();
+      const startDoc = await collection.doc(startAfter).get();
       if (startDoc.exists) {
         query = query.startAfter(startDoc);
       }
@@ -49,10 +72,9 @@ export class PostsService {
       ...doc.data(),
     } as PostDocument));
 
-    // Check if there are more posts
     const hasMore = posts.length > limit;
     if (hasMore) {
-      posts.pop(); // Remove the extra post
+      posts.pop();
     }
 
     const result: { posts: PostDocument[]; nextCursor?: string } = { posts };
@@ -68,7 +90,13 @@ export class PostsService {
    * Get a single post by ID
    */
   async getPost(postId: string): Promise<PostDocument | null> {
-    const doc = await this.collection.doc(postId).get();
+    if (this.useMockDb) {
+      return mockDb.getPost(postId);
+    }
+
+    const { db } = await import('../config/firebase');
+    const collection = db.collection('posts');
+    const doc = await collection.doc(postId).get();
 
     if (!doc.exists) {
       return null;
@@ -84,7 +112,20 @@ export class PostsService {
    * Delete a post (only by owner)
    */
   async deletePost(postId: string, userId: string): Promise<boolean> {
-    const doc = await this.collection.doc(postId).get();
+    if (this.useMockDb) {
+      const post = await mockDb.getPost(postId);
+      if (!post) {
+        return false;
+      }
+      if (post.userId !== userId) {
+        throw new Error('Unauthorized: Cannot delete another user\'s post');
+      }
+      return mockDb.deletePost(postId);
+    }
+
+    const { db } = await import('../config/firebase');
+    const collection = db.collection('posts');
+    const doc = await collection.doc(postId).get();
 
     if (!doc.exists) {
       return false;
@@ -95,7 +136,7 @@ export class PostsService {
       throw new Error('Unauthorized: Cannot delete another user\'s post');
     }
 
-    await this.collection.doc(postId).delete();
+    await collection.doc(postId).delete();
     return true;
   }
 }

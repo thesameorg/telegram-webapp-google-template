@@ -1,3 +1,11 @@
+// Load environment variables from .env file in development
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+if (process.env.NODE_ENV !== 'production') {
+  config({ path: resolve(__dirname, '../../.env') });
+}
+
 import app from './app';
 
 const port = parseInt(process.env.PORT || '8080');

@@ -24,14 +24,44 @@ export interface TelegramWebApp {
   };
 }
 
-export const telegram: TelegramWebApp = WebApp;
+// Check if running in real Telegram environment
+const isInTelegram = typeof window !== 'undefined' && WebApp?.initData?.length > 0;
+
+// Mock Telegram WebApp for development
+const mockTelegramWebApp: TelegramWebApp = {
+  initData: 'mock_init_data_for_dev',
+  initDataUnsafe: {
+    user: {
+      id: 123456789,
+      first_name: 'Dev',
+      last_name: 'User',
+      username: 'devuser',
+      language_code: 'en',
+    }
+  },
+  ready: () => console.log('📱 Mock Telegram ready'),
+  expand: () => console.log('📱 Mock Telegram expand'),
+  close: () => console.log('📱 Mock Telegram close'),
+  MainButton: {
+    setText: () => {},
+    show: () => {},
+    hide: () => {},
+    onClick: () => {},
+  },
+};
+
+export const telegram: TelegramWebApp = isInTelegram ? WebApp : mockTelegramWebApp;
 
 // Initialize Telegram WebApp
-telegram.ready();
-telegram.expand();
+if (isInTelegram) {
+  telegram.ready();
+  telegram.expand();
+} else {
+  console.log('⚠️  Not running in Telegram - using mock data for development');
+}
 
 export function getInitData(): string {
-  return telegram.initData;
+  return telegram.initData || 'dev_mode';
 }
 
 export function getUser() {

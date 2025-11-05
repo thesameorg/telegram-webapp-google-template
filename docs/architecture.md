@@ -9,7 +9,7 @@ A minimalistic Twitter-like application deployed as a single Docker container on
 ## Tech Stack
 
 ### Backend
-- **Framework**: Hono (lightweight, edge-compatible)
+- **Framework**: Express (battle-tested, Cloud Run optimized)
 - **Language**: TypeScript + Node.js 20
 - **Database**: Firestore (serverless, free tier)
 - **Auth**: Telegram WebApp initData validation + JWT
@@ -51,7 +51,7 @@ telegram-webapp-google-template/
 │   │   │   └── health.ts                # Health check
 │   │   ├── webhook.ts                   # Telegram bot webhook handler
 │   │   ├── types.ts                     # TypeScript types
-│   │   ├── index.ts                     # Hono app setup
+│   │   ├── app.ts                       # Express app setup
 │   │   └── server.ts                    # Entry point
 │   ├── package.json
 │   └── tsconfig.json
@@ -325,24 +325,24 @@ export function verifyToken(token: string): JWTPayload {
 ### 4. Auth Middleware
 ```typescript
 // backend/src/middleware/auth.middleware.ts
-import { Context, Next } from 'hono';
+import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../services/jwt';
 
-export async function authMiddleware(c: Context, next: Next) {
-  const authHeader = c.req.header('Authorization');
+export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
-    return c.json({ error: 'Missing authorization header' }, 401);
+    return res.status(401).json({ error: 'Missing authorization header' });
   }
 
   const token = authHeader.substring(7);
 
   try {
     const payload = verifyToken(token);
-    c.set('user', payload);
-    await next();
+    req.user = payload; // Attach user to request
+    next();
   } catch (error) {
-    return c.json({ error: 'Invalid or expired token' }, 401);
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
 ```
@@ -359,13 +359,13 @@ Handle bot commands like `/start`, `/help` when users interact with the bot dire
 // backend/src/webhook.ts
 // ADAPTED FROM REFERENCE REPO
 
+import { Request, Response } from 'express';
 import { Bot, webhookCallback } from 'grammy';
-import { Context } from 'hono';
 
-export async function handleWebhook(c: Context) {
+export async function handleWebhook(req: Request, res: Response) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
-    return c.json({ error: 'Bot token not configured' }, 500);
+    return res.status(500).json({ error: 'Bot token not configured' });
   }
 
   const bot = new Bot(botToken);
@@ -404,18 +404,18 @@ export async function handleWebhook(c: Context) {
     }
   });
 
-  // Use Grammy's webhook callback for Hono
-  return webhookCallback(bot, 'hono')(c);
+  // Use Grammy's webhook callback for Express
+  return webhookCallback(bot, 'express')(req, res);
 }
 ```
 
 ### Route Setup
 ```typescript
-// backend/src/index.ts
-import { Hono } from 'hono';
+// backend/src/app.ts
+import express from 'express';
 import { handleWebhook } from './webhook';
 
-const app = new Hono();
+const app = express();
 
 // Webhook endpoint (no auth required - Telegram calls this)
 app.post('/webhook', handleWebhook);
@@ -559,13 +559,14 @@ gcloud run deploy twitter-app \
 
 ---
 
-## Hono App Structure
+## Express App Structure
 
 ```typescript
-// backend/src/index.ts
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
+// backend/src/app.ts
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import path from 'path';
 import { handleWebhook } from './webhook';
 import { authHandler } from './api/auth';
 import {
@@ -576,13 +577,13 @@ import {
 } from './api/posts';
 import { healthHandler } from './api/health';
 import { authMiddleware } from './middleware/auth.middleware';
-import { serveStatic } from 'hono/serve-static';
 
-const app = new Hono();
+const app = express();
 
 // Middleware
-app.use('*', logger());
-app.use('/api/*', cors({
+app.use(morgan('dev')); // Logging
+app.use(express.json()); // Parse JSON bodies
+app.use(cors({
   origin: process.env.WEB_APP_URL || '*',
   credentials: true
 }));
@@ -599,23 +600,26 @@ app.post('/api/posts', authMiddleware, createPost);
 app.delete('/api/posts/:id', authMiddleware, deletePost);
 
 // Serve frontend static files
-app.get('*', serveStatic({ root: './public' }));
+app.use(express.static(path.join(__dirname, '../public')));
+
+// SPA fallback - serve index.html for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 export default app;
 ```
 
 ```typescript
 // backend/src/server.ts
-import app from './index';
+import app from './app';
 
 const port = parseInt(process.env.PORT || '8080');
 
-console.log(`🚀 Server starting on port ${port}`);
-console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-
-Bun.serve({
-  port,
-  fetch: app.fetch,
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 Health check: http://localhost:${port}/health`);
 });
 ```
 
@@ -731,7 +735,7 @@ function App() {
 | **Sessions** | KV Store | None (stateless JWT) |
 | **Images** | R2 | Skipped (Phase 2: Cloud Storage) |
 | **Payments** | Telegram Stars | Skipped |
-| **Framework** | Hono on Workers | Hono on Node.js |
+| **Framework** | Hono (edge runtime) | Express (Node.js) |
 | **Deployment** | Wrangler | Docker → Cloud Run |
 | **Secrets** | Wrangler secrets | GitHub Secrets → env vars |
 | **Runtime** | Edge (Cloudflare) | Container (Cloud Run) |
@@ -740,7 +744,6 @@ function App() {
 - ✅ Telegram initData validation logic
 - ✅ Webhook handler structure
 - ✅ Grammy.js bot framework
-- ✅ Hono framework
 - ✅ React + Vite + TypeScript frontend
 
 **What we removed**:

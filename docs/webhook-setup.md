@@ -36,13 +36,13 @@ Bot responds to user
 
 ```typescript
 // backend/src/webhook.ts
+import { Request, Response } from 'express';
 import { Bot, webhookCallback, Context as GrammyContext } from 'grammy';
-import { Context } from 'hono';
 
-export async function handleWebhook(c: Context) {
+export async function handleWebhook(req: Request, res: Response) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
-    return c.json({ error: 'Bot token not configured' }, 500);
+    return res.status(500).json({ error: 'Bot token not configured' });
   }
 
   const bot = new Bot(botToken);
@@ -99,19 +99,19 @@ export async function handleWebhook(c: Context) {
     console.error('Bot error:', err);
   });
 
-  // Use Grammy's webhook callback for Hono
-  return webhookCallback(bot, 'hono')(c);
+  // Use Grammy's webhook callback for Express
+  return webhookCallback(bot, 'express')(req, res);
 }
 ```
 
 ### 2. Register Webhook Route
 
 ```typescript
-// backend/src/index.ts
-import { Hono } from 'hono';
+// backend/src/app.ts
+import express from 'express';
 import { handleWebhook } from './webhook';
 
-const app = new Hono();
+const app = express();
 
 // Webhook endpoint (NO auth middleware - Telegram calls this)
 app.post('/webhook', handleWebhook);

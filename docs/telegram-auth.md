@@ -261,19 +261,18 @@ export class TelegramAuthService {
 
 ```typescript
 // backend/src/api/auth.ts
-import { Context } from 'hono';
+import { Request, Response } from 'express';
 import { TelegramAuthService } from '../services/telegram-auth';
 import { generateToken } from '../services/jwt';
 import { db } from '../config/firebase';
 
-export async function authHandler(c: Context): Promise<Response> {
+export async function authHandler(req: Request, res: Response) {
   try {
     // Parse request body
-    const body = await c.req.json();
-    const { initData } = body;
+    const { initData } = req.body;
 
     if (!initData) {
-      return c.json({ error: 'Missing initData' }, 400);
+      return res.status(400).json({ error: 'Missing initData' });
     }
 
     // Validate initData
@@ -301,7 +300,7 @@ export async function authHandler(c: Context): Promise<Response> {
       firstName: user.first_name,
     });
 
-    return c.json({
+    return res.json({
       authenticated: true,
       token,
       user: {
@@ -314,13 +313,10 @@ export async function authHandler(c: Context): Promise<Response> {
     });
   } catch (error) {
     console.error('Auth error:', error);
-    return c.json(
-      {
-        authenticated: false,
-        error: error instanceof Error ? error.message : 'Authentication failed',
-      },
-      401
-    );
+    return res.status(401).json({
+      authenticated: false,
+      error: error instanceof Error ? error.message : 'Authentication failed',
+    });
   }
 }
 ```
@@ -358,24 +354,24 @@ export function verifyToken(token: string): JWTPayload {
 
 ```typescript
 // backend/src/middleware/auth.middleware.ts
-import { Context, Next } from 'hono';
+import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../services/jwt';
 
-export async function authMiddleware(c: Context, next: Next) {
-  const authHeader = c.req.header('Authorization');
+export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
-    return c.json({ error: 'Missing authorization header' }, 401);
+    return res.status(401).json({ error: 'Missing authorization header' });
   }
 
   const token = authHeader.substring(7);
 
   try {
     const payload = verifyToken(token);
-    c.set('user', payload); // Attach user to context
-    await next();
+    req.user = payload; // Attach user to request
+    next();
   } catch (error) {
-    return c.json({ error: 'Invalid or expired token' }, 401);
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
 ```

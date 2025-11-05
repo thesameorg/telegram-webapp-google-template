@@ -94,7 +94,7 @@ Users authenticate through Telegram - no password needed. Telegram provides sign
 No session storage - JWT tokens in localStorage. Perfect for Cloud Run's serverless model.
 
 ### Monorepo
-Backend (Hono + Node.js) and frontend (React + Vite) in one repo, deployed as single container.
+Backend (Express + Node.js) and frontend (React + Vite) in one repo, deployed as single container.
 
 ### Firestore
 NoSQL database - no connection pooling headaches, auto-scaling, generous free tier.
@@ -128,7 +128,7 @@ NoSQL database - no connection pooling headaches, auto-scaling, generous free ti
 | Layer | Technology | Why |
 |-------|-----------|-----|
 | Frontend | React + Vite + Tailwind | Modern, fast, developer-friendly |
-| Backend | Hono + Node.js 20 | Lightweight, edge-compatible |
+| Backend | Express + Node.js 20 | Battle-tested, perfect for Cloud Run |
 | Database | Firestore | Serverless, no connection management |
 | Auth | Telegram WebApp + JWT | Secure, no password management |
 | Bot | Grammy.js | Best TypeScript bot framework |
@@ -146,7 +146,6 @@ From [telegram-webapp-cloudflare-template](https://github.com/thesameorg/telegra
 - Telegram initData validation logic (HMAC signature)
 - Webhook handler structure
 - Grammy.js bot framework
-- Hono framework
 - React + Vite frontend
 
 ❌ **Removed**:
@@ -211,7 +210,7 @@ git push origin main  # GitHub Actions handles deployment
 - [Telegram WebApp Docs](https://core.telegram.org/bots/webapps)
 - [Cloud Run Documentation](https://cloud.google.com/run/docs)
 - [Firestore Documentation](https://firebase.google.com/docs/firestore)
-- [Hono Documentation](https://hono.dev/)
+- [Express.js Documentation](https://expressjs.com/)
 - [Grammy.js Documentation](https://grammy.dev/)
 
 ---

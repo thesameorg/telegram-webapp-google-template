@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-export function healthHandler(req: Request, res: Response): void {
+export function healthHandler(_req: Request, res: Response): void {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),

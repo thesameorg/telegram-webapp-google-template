@@ -41,13 +41,14 @@ gcloud artifacts repositories create twitter-app \
 
 ## Configure GitHub Variables (Optional)
 
-If you want to use a different region or service name, set these in your GitHub repository:
+If you want to use a different region, service name, or repository name, set these in your GitHub repository:
 
 1. Go to your GitHub repository
 2. Settings → Secrets and variables → Actions → Variables tab
 3. Add these variables:
-   - `CLOUD_RUN_REGION`: Your GCP region (e.g., `us-central1`, `europe-west1`)
-   - `CLOUD_RUN_SERVICE_NAME`: Your service name (default: `twitter-app`)
+   - `CLOUD_RUN_REGION`: Your GCP region (e.g., `us-central1`, `asia-se1`, `europe-west1`) - default: `asia-se1`
+   - `CLOUD_RUN_SERVICE_NAME`: Your Cloud Run service name (default: `telegram-webapp-google-tpl`)
+   - `ARTIFACT_REGISTRY_REPO`: Your Artifact Registry repository name (default: `twitter-app`)
    - `CLOUD_RUN_URL`: Will be set after first deployment
 
 ## Verify
@@ -71,10 +72,30 @@ Common GCP regions:
 
 **Choose the region closest to your users for lower latency.**
 
+## Understanding the Image Path
+
+The workflow uses the following format for Docker images:
+
+```
+REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY_NAME/IMAGE_NAME:TAG
+```
+
+Where:
+- `REPOSITORY_NAME` = `ARTIFACT_REGISTRY_REPO` variable (default: `twitter-app`)
+- `IMAGE_NAME` = `CLOUD_RUN_SERVICE_NAME` variable (default: `telegram-webapp-google-tpl`)
+
+For example:
+```
+asia-se1-docker.pkg.dev/my-project/twitter-app/telegram-webapp-google-tpl:latest
+```
+
+**Important:** Make sure your Artifact Registry repository name matches the `ARTIFACT_REGISTRY_REPO` variable in your GitHub settings, or the Docker push will fail with a 404 error.
+
 ## Next Steps
 
 After creating the repository:
-1. Push to `main` branch or manually trigger the workflow
-2. The GitHub Action will build and push the Docker image
-3. Cloud Run will deploy your service
-4. Note the deployed URL and set it as `CLOUD_RUN_URL` GitHub variable
+1. Ensure the repository name matches your `ARTIFACT_REGISTRY_REPO` GitHub variable (or use the default `twitter-app`)
+2. Push to `main` branch or manually trigger the workflow
+3. The GitHub Action will build and push the Docker image
+4. Cloud Run will deploy your service
+5. Note the deployed URL and set it as `CLOUD_RUN_URL` GitHub variable

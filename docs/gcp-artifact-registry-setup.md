@@ -16,14 +16,14 @@ Before the GitHub Actions workflow can push Docker images, you need to create an
 # Enable Artifact Registry API (if not already enabled)
 gcloud services enable artifactregistry.googleapis.com
 
-# Create the repository
-gcloud artifacts repositories create twitter-app \
+# Create the repository (use your service name)
+gcloud artifacts repositories create telegram-webapp-google-tpl \
     --repository-format=docker \
-    --location=us-central1 \
-    --description="Twitter app Docker images for Cloud Run"
+    --location=asia-se1 \
+    --description="Telegram WebApp Docker images for Cloud Run"
 ```
 
-**Note:** Change `us-central1` to your preferred region if you want to use a different one.
+**Note:** Change `asia-se1` to your preferred region and `telegram-webapp-google-tpl` to your service name.
 
 ### Option 2: Using Google Cloud Console
 
@@ -32,11 +32,11 @@ gcloud artifacts repositories create twitter-app \
 3. Navigate to **Artifact Registry** (use search or find in menu)
 4. Click **+ CREATE REPOSITORY**
 5. Fill in:
-   - **Name**: `twitter-app`
+   - **Name**: `telegram-webapp-google-tpl` (or your service name)
    - **Format**: `Docker`
    - **Location type**: `Region`
-   - **Region**: `us-central1` (or your preferred region)
-   - **Description**: `Twitter app Docker images for Cloud Run`
+   - **Region**: `asia-se1` (or your preferred region)
+   - **Description**: `Telegram WebApp Docker images for Cloud Run`
 6. Click **CREATE**
 
 ## Configure GitHub Variables (Optional)
@@ -45,20 +45,20 @@ If you want to use a different region or service name, set these in your GitHub 
 
 1. Go to your GitHub repository
 2. Settings → Secrets and variables → Actions → Variables tab
-3. Add these variables:
-   - `CLOUD_RUN_REGION`: Your GCP region (e.g., `us-central1`, `europe-west1`)
-   - `CLOUD_RUN_SERVICE_NAME`: Your service name (default: `twitter-app`)
-   - `CLOUD_RUN_URL`: Will be set after first deployment
+3. Add these variables (all optional, defaults shown):
+   - `GCP_REGION`: Your GCP region - default: `asia-se1` (e.g., `us-central1`, `europe-west1`)
+   - `SERVICE_NAME`: Your service name - default: `telegram-webapp-google-tpl`
+   - `WEB_APP_URL`: Your deployed URL - set this after first deployment for webhook configuration
 
 ## Verify
 
 After creating the repository, verify it exists:
 
 ```bash
-gcloud artifacts repositories list --location=us-central1
+gcloud artifacts repositories list --location=asia-se1
 ```
 
-You should see `twitter-app` in the list.
+You should see your repository (e.g., `telegram-webapp-google-tpl`) in the list.
 
 ## Regions
 
@@ -71,10 +71,30 @@ Common GCP regions:
 
 **Choose the region closest to your users for lower latency.**
 
+## Understanding the Image Path
+
+The workflow uses the following format for Docker images:
+
+```
+REGION-docker.pkg.dev/PROJECT_ID/SERVICE_NAME/SERVICE_NAME:TAG
+```
+
+**Simplified Structure:** We use `SERVICE_NAME` for both the Artifact Registry repository name AND the image name. This keeps everything consistent and easy to understand.
+
+For example:
+```
+asia-se1-docker.pkg.dev/my-project/telegram-webapp-google-tpl/telegram-webapp-google-tpl:latest
+                                    ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^
+                                    (repository name)         (image name)
+```
+
+**Important:** Create your Artifact Registry repository with the same name as your service. The workflow defaults to `telegram-webapp-google-tpl` for both.
+
 ## Next Steps
 
 After creating the repository:
-1. Push to `main` branch or manually trigger the workflow
-2. The GitHub Action will build and push the Docker image
-3. Cloud Run will deploy your service
-4. Note the deployed URL and set it as `CLOUD_RUN_URL` GitHub variable
+1. Ensure the repository name matches your `SERVICE_NAME` (default: `telegram-webapp-google-tpl`)
+2. Push to `main` branch or manually trigger the workflow
+3. The GitHub Action will build and push the Docker image
+4. Cloud Run will deploy your service
+5. Note the deployed URL and set it as `WEB_APP_URL` GitHub variable for webhook configuration

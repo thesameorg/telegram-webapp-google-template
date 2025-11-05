@@ -7,8 +7,8 @@ on:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ vars.CLOUD_RUN_REGION || 'asia-se1' }}
-  SERVICE_NAME: ${{ vars.CLOUD_RUN_SERVICE_NAME || 'telegram-webapp-google-tpl' }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'asia-se1' }}
+  SERVICE_NAME: ${{ vars.SERVICE_NAME || 'telegram-webapp-google-tpl' }}
 
 jobs:
   build-and-deploy:
@@ -55,7 +55,7 @@ jobs:
             --set-env-vars="FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}" \
             --set-env-vars="FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}" \
             --set-env-vars="FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}" \
-            --set-env-vars="WEB_APP_URL=${{ vars.CLOUD_RUN_URL }}" \
+            --set-env-vars="WEB_APP_URL=${{ vars.WEB_APP_URL }}" \
             --min-instances=0 \
             --max-instances=10 \
             --cpu=1 \
@@ -72,7 +72,7 @@ jobs:
           echo "🚀 Deployed to: $URL"
 
       - name: Set Telegram Webhook
-        if: ${{ vars.CLOUD_RUN_URL != '' }}
+        if: ${{ vars.WEB_APP_URL != '' }}
         run: |
           WEBHOOK_URL="${{ steps.get-url.outputs.url }}/webhook"
           echo "Setting webhook to: $WEBHOOK_URL"
@@ -122,7 +122,7 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Update CLOUD_RUN_URL variable if this is first deployment" >> $GITHUB_STEP_SUMMARY
+          echo "1. Update WEB_APP_URL variable if this is first deployment" >> $GITHUB_STEP_SUMMARY
           echo "2. Test bot: Send /start to your Telegram bot" >> $GITHUB_STEP_SUMMARY
           echo "3. Open WebApp and try posting" >> $GITHUB_STEP_SUMMARY
           echo "4. Check logs: \`gcloud run logs tail ${{ env.SERVICE_NAME }} --region=${{ env.GCP_REGION }}\`" >> $GITHUB_STEP_SUMMARY

@@ -1,10 +1,7 @@
 import type { PostDocument } from '../types';
-import { mockDb } from '../config/mock-db';
-
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.DEV_BYPASS_AUTH === 'true';
 
 export class PostsService {
-  private readonly useMockDb = isDevelopment;
+  // Always use real Firebase - no mock database
 
   /**
    * Create a new post
@@ -21,10 +18,6 @@ export class PostsService {
       author,
     };
 
-    if (this.useMockDb) {
-      return mockDb.createPost(postData);
-    }
-
     const { db } = await import('../config/firebase');
     const collection = db.collection('posts');
     const docRef = await collection.add(postData);
@@ -40,19 +33,6 @@ export class PostsService {
     posts: PostDocument[];
     nextCursor?: string;
   }> {
-    if (this.useMockDb) {
-      const posts = await mockDb.getPosts(limit + 1, startAfter);
-      const hasMore = posts.length > limit;
-      if (hasMore) {
-        posts.pop();
-      }
-      const result: { posts: PostDocument[]; nextCursor?: string } = { posts };
-      if (hasMore && posts.length > 0) {
-        result.nextCursor = posts[posts.length - 1].id;
-      }
-      return result;
-    }
-
     const { db } = await import('../config/firebase');
     const collection = db.collection('posts');
     let query = collection
@@ -90,10 +70,6 @@ export class PostsService {
    * Get a single post by ID
    */
   async getPost(postId: string): Promise<PostDocument | null> {
-    if (this.useMockDb) {
-      return mockDb.getPost(postId);
-    }
-
     const { db } = await import('../config/firebase');
     const collection = db.collection('posts');
     const doc = await collection.doc(postId).get();
@@ -112,17 +88,6 @@ export class PostsService {
    * Delete a post (only by owner)
    */
   async deletePost(postId: string, userId: string): Promise<boolean> {
-    if (this.useMockDb) {
-      const post = await mockDb.getPost(postId);
-      if (!post) {
-        return false;
-      }
-      if (post.userId !== userId) {
-        throw new Error('Unauthorized: Cannot delete another user\'s post');
-      }
-      return mockDb.deletePost(postId);
-    }
-
     const { db } = await import('../config/firebase');
     const collection = db.collection('posts');
     const doc = await collection.doc(postId).get();

@@ -24,7 +24,12 @@
     "tunnel:status": "bash scripts/tunnel.sh status",
     "webhook:set": "bash scripts/webhook.sh set",
     "webhook:status": "bash scripts/webhook.sh status",
-    "webhook:clear": "bash scripts/webhook.sh clear"
+    "webhook:clear": "bash scripts/webhook.sh clear",
+    "docker:build": "bash scripts/docker-local.sh build",
+    "docker:start": "bash scripts/docker-local.sh start",
+    "docker:stop": "bash scripts/docker-local.sh stop",
+    "docker:logs": "bash scripts/docker-local.sh logs",
+    "docker:status": "bash scripts/docker-local.sh status"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

@@ -5,7 +5,7 @@ import { generateToken } from '../services/jwt';
 export async function authHandler(req: Request, res: Response): Promise<void> {
   try {
     // DEV MODE: Bypass Telegram authentication for local testing
-    if (process.env.NODE_ENV === 'development' && process.env.DEV_BYPASS_AUTH === 'true') {
+    if (process.env.DEV_BYPASS_AUTH === 'true') {
       console.log('⚠️  DEV MODE: Bypassing Telegram authentication');
       const mockUser = {
         id: 123456789,

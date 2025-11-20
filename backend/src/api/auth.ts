@@ -1,29 +1,24 @@
 import { Request, Response } from 'express';
 import { TelegramAuthService } from '../services/telegram-auth';
 import { generateToken } from '../services/jwt';
+import { MOCK_USER } from '../config/mock-user';
 
 export async function authHandler(req: Request, res: Response): Promise<void> {
   try {
     // DEV MODE: Bypass Telegram authentication for local testing
     if (process.env.DEV_BYPASS_AUTH === 'true') {
       console.log('⚠️  DEV MODE: Bypassing Telegram authentication');
-      const mockUser = {
-        id: 123456789,
-        first_name: 'Dev',
-        last_name: 'User',
-        username: 'devuser',
-      };
 
       const token = generateToken({
-        userId: mockUser.id.toString(),
-        username: mockUser.username,
-        firstName: mockUser.first_name,
+        userId: MOCK_USER.id.toString(),
+        username: MOCK_USER.username,
+        firstName: MOCK_USER.first_name,
       });
 
       res.json({
         authenticated: true,
         token,
-        user: mockUser,
+        user: MOCK_USER,
       });
       return;
     }

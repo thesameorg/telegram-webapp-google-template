@@ -1,100 +1,57 @@
 import type { PostDocument } from '../types';
 
 export class PostsService {
-  // Always use real Firebase - no mock database
+  private async getCollection() {
+    const { db } = await import('../config/firebase');
+    return db.collection('posts');
+  }
 
-  /**
-   * Create a new post
-   */
   async createPost(
     userId: string,
     content: string,
     author: { username: string; firstName: string; photoUrl?: string }
   ): Promise<PostDocument> {
-    const postData = {
-      userId,
-      content,
-      createdAt: new Date().toISOString(),
-      author,
-    };
-
-    const { db } = await import('../config/firebase');
-    const collection = db.collection('posts');
+    const postData = { userId, content, createdAt: new Date().toISOString(), author };
+    const collection = await this.getCollection();
     const docRef = await collection.add(postData);
-    const post = { id: docRef.id, ...postData };
-
-    return post;
+    return { id: docRef.id, ...postData };
   }
 
-  /**
-   * Get feed (paginated, newest first)
-   */
-  async getFeed(limit: number = 20, startAfter?: string): Promise<{
+  async getFeed(limit = 20, startAfter?: string): Promise<{
     posts: PostDocument[];
     nextCursor?: string;
   }> {
-    const { db } = await import('../config/firebase');
-    const collection = db.collection('posts');
-    let query = collection
-      .orderBy('createdAt', 'desc')
-      .limit(limit + 1);
+    const collection = await this.getCollection();
+    let query = collection.orderBy('createdAt', 'desc').limit(limit + 1);
 
     if (startAfter) {
       const startDoc = await collection.doc(startAfter).get();
-      if (startDoc.exists) {
-        query = query.startAfter(startDoc);
-      }
+      if (startDoc.exists) query = query.startAfter(startDoc);
     }
 
     const snapshot = await query.get();
-    const posts = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as PostDocument));
-
+    const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PostDocument));
     const hasMore = posts.length > limit;
-    if (hasMore) {
-      posts.pop();
-    }
 
-    const result: { posts: PostDocument[]; nextCursor?: string } = { posts };
-
-    if (hasMore && posts.length > 0) {
-      result.nextCursor = posts[posts.length - 1].id;
-    }
-
-    return result;
-  }
-
-  /**
-   * Get a single post by ID
-   */
-  async getPost(postId: string): Promise<PostDocument | null> {
-    const { db } = await import('../config/firebase');
-    const collection = db.collection('posts');
-    const doc = await collection.doc(postId).get();
-
-    if (!doc.exists) {
-      return null;
-    }
+    if (hasMore) posts.pop();
 
     return {
-      id: doc.id,
-      ...doc.data(),
-    } as PostDocument;
+      posts,
+      ...(hasMore && posts.length > 0 && { nextCursor: posts[posts.length - 1].id })
+    };
   }
 
-  /**
-   * Delete a post (only by owner)
-   */
+  async getPost(postId: string): Promise<PostDocument | null> {
+    const collection = await this.getCollection();
+    const doc = await collection.doc(postId).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } as PostDocument : null;
+  }
+
   async deletePost(postId: string, userId: string): Promise<boolean> {
-    const { db } = await import('../config/firebase');
-    const collection = db.collection('posts');
+    const collection = await this.getCollection();
     const doc = await collection.doc(postId).get();
 
-    if (!doc.exists) {
-      return false;
-    }
+    if (!doc.exists) return false;
 
     const post = doc.data() as PostDocument;
     if (post.userId !== userId) {

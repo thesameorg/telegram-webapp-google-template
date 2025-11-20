@@ -13,19 +13,6 @@ export class TelegramAuthService {
   }
 
   /**
-   * Extracts initData from authorization header or body parameter
-   */
-  extractInitData(authHeader?: string, initDataParam?: string): string | null {
-    if (authHeader) {
-      const trimmed = authHeader.trim();
-      if (trimmed.startsWith('Bearer ')) return trimmed.substring(7).trim();
-      if (trimmed.startsWith('tma ')) return trimmed.substring(4).trim();
-      return trimmed;
-    }
-    return initDataParam?.trim() || null;
-  }
-
-  /**
    * Validates Telegram WebApp initData
    * Returns validated user object
    */

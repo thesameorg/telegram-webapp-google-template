@@ -3,11 +3,18 @@
 # ============================================
 FROM node:20-alpine AS frontend-builder
 
+# Accept build arguments
+ARG DEV_BYPASS_AUTH=false
+
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 
 COPY frontend/ ./
+
+# Create .env file in parent directory for Vite to pick up
+RUN mkdir -p /app && echo "DEV_BYPASS_AUTH=${DEV_BYPASS_AUTH}" > /app/.env
+
 RUN npm run build
 # Output: /app/frontend/dist
 

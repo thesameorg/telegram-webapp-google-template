@@ -21,7 +21,12 @@ fi
 case "$1" in
   build)
     echo "🔨 Building Docker image..."
-    docker build -t "$IMAGE_NAME" "$PROJECT_DIR"
+    # Pass DEV_BYPASS_AUTH from .env as build argument (defaults to true for local)
+    echo "📦 Building with DEV_BYPASS_AUTH=${DEV_BYPASS_AUTH:-true}"
+    docker build \
+      --build-arg DEV_BYPASS_AUTH="${DEV_BYPASS_AUTH:-true}" \
+      -t "$IMAGE_NAME" \
+      "$PROJECT_DIR"
     echo "✅ Image built: $IMAGE_NAME"
     ;;
 

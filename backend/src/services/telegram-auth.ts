@@ -13,6 +13,19 @@ export class TelegramAuthService {
   }
 
   /**
+   * Extracts initData from authorization header or body parameter
+   */
+  extractInitData(authHeader?: string, initDataParam?: string): string | null {
+    if (authHeader) {
+      const trimmed = authHeader.trim();
+      if (trimmed.startsWith('Bearer ')) return trimmed.substring(7).trim();
+      if (trimmed.startsWith('tma ')) return trimmed.substring(4).trim();
+      return trimmed;
+    }
+    return initDataParam?.trim() || null;
+  }
+
+  /**
    * Validates Telegram WebApp initData
    * Returns validated user object
    */
@@ -38,11 +51,18 @@ export class TelegramAuthService {
       .map(([key, value]) => `${key}=${value}`)
       .join('\n');
 
+    console.log('🔍 Validating initData signature...');
+    console.log('📝 Data check string preview:', dataCheckString.substring(0, 100));
+
     // Step 3-4: Validate signature
     const isValid = await this.validateSignature(dataCheckString, hash);
     if (!isValid) {
+      console.error('❌ Signature validation failed');
+      console.error('Expected hash:', hash.substring(0, 16) + '...');
       throw new Error('Invalid initData signature');
     }
+
+    console.log('✅ Signature valid');
 
     // Step 5: Check auth_date
     const authDate = parseInt(urlParams.get('auth_date') || '0');

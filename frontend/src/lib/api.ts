@@ -31,9 +31,11 @@ export interface FeedResponse {
   nextCursor?: string;
 }
 
-/**
- * Authenticate with Telegram initData
- */
+const handleApiError = async (response: Response, defaultMsg: string) => {
+  const error = await response.json();
+  throw new Error(error.error || defaultMsg);
+};
+
 export async function authenticate(initData: string): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE}/auth`, {
     method: 'POST',
@@ -41,11 +43,7 @@ export async function authenticate(initData: string): Promise<AuthResponse> {
     body: JSON.stringify({ initData }),
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Authentication failed');
-  }
-
+  if (!response.ok) await handleApiError(response, 'Authentication failed');
   return response.json();
 }
 
@@ -78,54 +76,30 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   return response;
 }
 
-/**
- * Get feed (public)
- */
 export async function getFeed(limit: number = 20, startAfter?: string): Promise<FeedResponse> {
   let url = `${API_BASE}/posts?limit=${limit}`;
-  if (startAfter) {
-    url += `&startAfter=${startAfter}`;
-  }
+  if (startAfter) url += `&startAfter=${startAfter}`;
 
   const response = await fetch(url);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to fetch feed');
-  }
-
+  if (!response.ok) await handleApiError(response, 'Failed to fetch feed');
   return response.json();
 }
 
-/**
- * Create a post (auth required)
- */
 export async function createPost(content: string): Promise<{ post: Post }> {
   const response = await fetchWithAuth('/posts', {
     method: 'POST',
     body: JSON.stringify({ content }),
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to create post');
-  }
-
+  if (!response.ok) await handleApiError(response, 'Failed to create post');
   return response.json();
 }
 
-/**
- * Delete a post (auth required, owner only)
- */
 export async function deletePost(postId: string): Promise<{ success: boolean }> {
   const response = await fetchWithAuth(`/posts/${postId}`, {
     method: 'DELETE',
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to delete post');
-  }
-
+  if (!response.ok) await handleApiError(response, 'Failed to delete post');
   return response.json();
 }

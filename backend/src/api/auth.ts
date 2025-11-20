@@ -2,14 +2,7 @@ import { Request, Response } from 'express';
 import { TelegramAuthService } from '../services/telegram-auth';
 import { generateToken } from '../services/jwt';
 import { MOCK_USER } from '../config/mock-user';
-
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  photo_url?: string;
-}
+import type { TelegramUser } from '../types';
 
 const buildAuthResponse = (user: TelegramUser) => {
   const token = generateToken({

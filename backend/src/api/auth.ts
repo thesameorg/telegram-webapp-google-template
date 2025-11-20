@@ -3,41 +3,54 @@ import { TelegramAuthService } from '../services/telegram-auth';
 import { generateToken } from '../services/jwt';
 import { MOCK_USER } from '../config/mock-user';
 
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+}
+
+const buildAuthResponse = (user: TelegramUser) => {
+  const token = generateToken({
+    userId: user.id.toString(),
+    username: user.username || '',
+    firstName: user.first_name,
+  });
+
+  return {
+    authenticated: true,
+    token,
+    user: {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      username: user.username,
+      photoUrl: user.photo_url,
+    },
+  };
+};
+
+const isDevelopmentBypass = (initData: string) =>
+  process.env.DEV_BYPASS_AUTH === 'true' && initData === 'dev_mode_bypass';
+
 export async function authHandler(req: Request, res: Response): Promise<void> {
   try {
-    // Extract initData from request body
     const { initData } = req.body;
-
-    console.log('🔐 Auth attempt:', {
-      hasInitData: !!initData,
-      initDataLength: initData?.length || 0,
-      initDataPreview: initData?.substring(0, 50) || 'none',
-    });
 
     if (!initData) {
       res.status(400).json({ error: 'Missing initData' });
       return;
     }
 
-    // DEV MODE: Check if this is a dev bypass request (not real Telegram data)
-    if (process.env.DEV_BYPASS_AUTH === 'true' && initData === 'dev_mode_bypass') {
-      console.log('⚠️  DEV MODE: Bypassing Telegram authentication for mock request');
-
-      const token = generateToken({
-        userId: MOCK_USER.id.toString(),
-        username: MOCK_USER.username,
-        firstName: MOCK_USER.first_name,
-      });
-
-      res.json({
-        authenticated: true,
-        token,
-        user: MOCK_USER,
-      });
+    // Development bypass
+    if (isDevelopmentBypass(initData)) {
+      console.log('⚠️  DEV MODE: Bypassing Telegram authentication');
+      res.json(buildAuthResponse(MOCK_USER));
       return;
     }
 
-    // Real Telegram authentication (even if DEV_BYPASS_AUTH is true)
+    // Real Telegram authentication
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
       res.status(500).json({ error: 'Bot token not configured' });
@@ -47,24 +60,7 @@ export async function authHandler(req: Request, res: Response): Promise<void> {
     const authService = new TelegramAuthService(botToken);
     const user = await authService.validateInitData(initData);
 
-    // Generate JWT token
-    const token = generateToken({
-      userId: user.id.toString(),
-      username: user.username || '',
-      firstName: user.first_name,
-    });
-
-    res.json({
-      authenticated: true,
-      token,
-      user: {
-        id: user.id,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        username: user.username,
-        photoUrl: user.photo_url,
-      },
-    });
+    res.json(buildAuthResponse(user));
   } catch (error) {
     console.error('Auth error:', error);
     res.status(401).json({

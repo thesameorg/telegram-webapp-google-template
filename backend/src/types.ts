@@ -16,18 +16,6 @@ export interface JWTPayload {
   firstName: string;
 }
 
-// Firestore User Document
-export interface UserDocument {
-  id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  photoUrl: string;
-  languageCode: string;
-  isPremium: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // Post Document
 export interface PostDocument {

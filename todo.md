@@ -1,4 +1,8 @@
-2. add user's images (if any) from telegram
+1. make same 
+2. check webhook for localhost, localhost + docker work.
+
+1. do we really need react router? maybe remove all except deployed state? idk... 
+
 3. simplify shit
     - local run methods 
     - sh scripts
@@ -10,8 +14,7 @@
 5. fresh-run. delete all shit & do from scratch.
 
 
-2. check webhook for localhost, localhost + docker work.
 
 
 
-6. Cloud Storage - images refactor!
+6. Cloud Storage - add UGC images!

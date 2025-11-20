@@ -42,6 +42,21 @@ jobs:
           docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest
 
+      - name: Create environment variables file
+        run: |
+          cat > env.yaml << 'EOF'
+          NODE_ENV: production
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: |
+            ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+          EOF
+
+          echo "✅ Created env.yaml file"
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
@@ -49,7 +64,7 @@ jobs:
             --platform=managed \
             --region=${{ env.GCP_REGION }} \
             --allow-unauthenticated \
-            --set-env-vars="NODE_ENV=production,TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},JWT_SECRET=${{ secrets.JWT_SECRET }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},WEB_APP_URL=${{ vars.WEB_APP_URL }}" \
+            --env-vars-file=env.yaml \
             --min-instances=0 \
             --max-instances=10 \
             --cpu=1 \

@@ -14,6 +14,7 @@ export interface JWTPayload {
   userId: string;
   username: string;
   firstName: string;
+  photoUrl?: string;
 }
 
 

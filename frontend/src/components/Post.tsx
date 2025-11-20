@@ -25,6 +25,7 @@ export function Post({ post, currentUserId, onDelete }: PostProps) {
               src={post.author.photoUrl}
               alt={post.author.firstName}
               className="w-10 h-10 rounded-full"
+              loading="lazy"
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">

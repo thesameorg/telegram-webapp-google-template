@@ -43,6 +43,7 @@ export async function createPost(req: Request, res: Response): Promise<void> {
     const post = await postsService.createPost(req.user.userId, content, {
       username: req.user.username,
       firstName: req.user.firstName,
+      photoUrl: req.user.photoUrl,
     });
 
     res.status(201).json({ post });

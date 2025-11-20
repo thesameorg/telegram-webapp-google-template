@@ -9,6 +9,7 @@ const buildAuthResponse = (user: TelegramUser) => {
     userId: user.id.toString(),
     username: user.username || '',
     firstName: user.first_name,
+    photoUrl: user.photo_url,
   });
 
   return {

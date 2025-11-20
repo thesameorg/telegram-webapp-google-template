@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { createPost } from '../lib/api';
+import { Button } from './ui';
+import { POST_CHARACTER_LIMIT } from '../lib/constants';
+import { getErrorMessage } from '../lib/utils';
 
 interface PostFormProps {
   onPostCreated: () => void;
@@ -18,8 +21,8 @@ export function PostForm({ onPostCreated }: PostFormProps) {
       return;
     }
 
-    if (content.length > 280) {
-      setError('Post is too long (max 280 characters)');
+    if (content.length > POST_CHARACTER_LIMIT) {
+      setError(`Post is too long (max ${POST_CHARACTER_LIMIT} characters)`);
       return;
     }
 
@@ -31,13 +34,14 @@ export function PostForm({ onPostCreated }: PostFormProps) {
       setContent('');
       onPostCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create post');
+      setError(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const remainingChars = 280 - content.length;
+  const remainingChars = POST_CHARACTER_LIMIT - content.length;
+  const isValid = content.trim() && content.length <= POST_CHARACTER_LIMIT;
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-4">
@@ -51,24 +55,14 @@ export function PostForm({ onPostCreated }: PostFormProps) {
           disabled={isSubmitting}
         />
         <div className="flex justify-between items-center mt-2">
-          <span
-            className={`text-sm ${
-              remainingChars < 0 ? 'text-red-500' : 'text-gray-500'
-            }`}
-          >
+          <span className={`text-sm ${remainingChars < 0 ? 'text-red-500' : 'text-gray-500'}`}>
             {remainingChars} characters remaining
           </span>
-          <button
-            type="submit"
-            disabled={isSubmitting || !content.trim() || content.length > 280}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
-          >
+          <Button type="submit" disabled={isSubmitting || !isValid}>
             {isSubmitting ? 'Posting...' : 'Post'}
-          </button>
+          </Button>
         </div>
-        {error && (
-          <p className="mt-2 text-sm text-red-500">{error}</p>
-        )}
+        {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
       </form>
     </div>
   );

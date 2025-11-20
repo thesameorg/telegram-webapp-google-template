@@ -1,3 +1,5 @@
+import { STORAGE_KEYS, FEED_PAGE_SIZE } from './constants';
+
 const API_BASE = '/api';
 
 export interface User {
@@ -47,15 +49,10 @@ export async function authenticate(initData: string): Promise<AuthResponse> {
   return response.json();
 }
 
-/**
- * Fetch with authentication
- */
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = localStorage.getItem('jwt');
+  const token = localStorage.getItem(STORAGE_KEYS.JWT);
 
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
+  if (!token) throw new Error('Not authenticated');
 
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
@@ -67,8 +64,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   });
 
   if (response.status === 401) {
-    // Token expired - clear and reload
-    localStorage.removeItem('jwt');
+    localStorage.removeItem(STORAGE_KEYS.JWT);
     window.location.reload();
     throw new Error('Session expired');
   }
@@ -76,10 +72,8 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   return response;
 }
 
-export async function getFeed(limit: number = 20, startAfter?: string): Promise<FeedResponse> {
-  let url = `${API_BASE}/posts?limit=${limit}`;
-  if (startAfter) url += `&startAfter=${startAfter}`;
-
+export async function getFeed(limit: number = FEED_PAGE_SIZE, startAfter?: string): Promise<FeedResponse> {
+  const url = `${API_BASE}/posts?limit=${limit}${startAfter ? `&startAfter=${startAfter}` : ''}`;
   const response = await fetch(url);
   if (!response.ok) await handleApiError(response, 'Failed to fetch feed');
   return response.json();

@@ -13,12 +13,14 @@ const getFeedSchema = z.object({
   startAfter: z.string().optional(),
 });
 
-const handleError = (res: Response, error: unknown, defaultMsg: string) => {
+const handleError = (res: Response, error: unknown, defaultMsg: string): void => {
   if (error instanceof z.ZodError) {
-    return res.status(400).json({ error: 'Invalid input', details: error.errors });
+    res.status(400).json({ error: 'Invalid input', details: error.errors });
+    return;
   }
   if (error instanceof Error && error.message.includes('Unauthorized')) {
-    return res.status(403).json({ error: error.message });
+    res.status(403).json({ error: error.message });
+    return;
   }
   console.error(defaultMsg, error);
   res.status(500).json({ error: defaultMsg });

@@ -1,13 +1,13 @@
-1. remove twitter naming
 2. add user's images (if any) from telegram
 3. simplify shit
-    - main files
-    - local run methods + sh scripts
-    - 
+    - local run methods 
+    - sh scripts
+    - deployment
+    - dockefile, compose, etc.
 
 
-4. make simple docs
-5. make quickstart
+4. make simple docs + quickstart
+5. fresh-run. delete all shit & do from scratch.
 
 
 2. check webhook for localhost, localhost + docker work.

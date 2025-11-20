@@ -1,6 +1,6 @@
 # Telegram WebApp Google Cloud Template
 
-A minimalist Twitter-like app with Telegram WebApp authentication, deployed on Google Cloud Run.
+A minimalist TeleGoog App with Telegram WebApp authentication, deployed on Google Cloud Run.
 
 ## Features
 
@@ -142,7 +142,7 @@ Deployment happens automatically via GitHub Actions when you push to `main`.
 For manual deployment:
 ```bash
 # Build and deploy
-gcloud run deploy twitter-app --source=.
+gcloud run deploy telegoog-app --source=.
 ```
 
 See [docs/deployment.md](docs/deployment.md) for detailed deployment guide.

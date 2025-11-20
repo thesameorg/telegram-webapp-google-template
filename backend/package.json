@@ -1,7 +1,7 @@
 {
-  "name": "twitter-app-backend",
+  "name": "telegoog-app-backend",
   "version": "1.0.0",
-  "description": "Backend for minimalist Twitter app",
+  "description": "Backend for minimalist TeleGoog app",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

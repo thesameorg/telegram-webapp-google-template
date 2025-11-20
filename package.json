@@ -1,7 +1,7 @@
 {
   "name": "telegram-webapp-google-template",
   "version": "1.0.0",
-  "description": "Minimalist Twitter-like app with Telegram WebApp auth on Google Cloud Run",
+  "description": "Minimalist TeleGoog App with Telegram WebApp auth on Google Cloud Run",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

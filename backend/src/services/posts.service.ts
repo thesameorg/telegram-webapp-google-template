@@ -1,6 +1,8 @@
 import type { PostDocument } from '../types';
+import { StorageService } from './storage.service';
 
 export class PostsService {
+  private storageService = new StorageService();
   private async getCollection() {
     const { db } = await import('../config/firebase');
     return db.collection('posts');
@@ -9,9 +11,16 @@ export class PostsService {
   async createPost(
     userId: string,
     content: string,
-    author: { username: string; firstName: string; photoUrl?: string }
+    author: { username: string; firstName: string; photoUrl?: string },
+    imageUrl?: string
   ): Promise<PostDocument> {
-    const postData = { userId, content, createdAt: new Date().toISOString(), author };
+    const postData = {
+      userId,
+      content,
+      createdAt: new Date().toISOString(),
+      author,
+      ...(imageUrl && { imageUrl })
+    };
     const collection = await this.getCollection();
     const docRef = await collection.add(postData);
     return { id: docRef.id, ...postData };
@@ -56,6 +65,11 @@ export class PostsService {
     const post = doc.data() as PostDocument;
     if (post.userId !== userId) {
       throw new Error('Unauthorized: Cannot delete another user\'s post');
+    }
+
+    // Delete image from storage if exists
+    if (post.imageUrl) {
+      await this.storageService.deletePostImage(post.imageUrl);
     }
 
     await collection.doc(postId).delete();

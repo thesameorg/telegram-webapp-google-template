@@ -6,6 +6,7 @@ const postsService = new PostsService();
 
 const createPostSchema = z.object({
   content: z.string().min(1).max(280),
+  imageUrl: z.string().url().optional(),
 });
 
 const getFeedSchema = z.object({
@@ -39,12 +40,17 @@ export async function createPost(req: Request, res: Response): Promise<void> {
   try {
     if (!req.user) return void res.status(401).json({ error: 'Unauthorized' });
 
-    const { content } = createPostSchema.parse(req.body);
-    const post = await postsService.createPost(req.user.userId, content, {
-      username: req.user.username,
-      firstName: req.user.firstName,
-      photoUrl: req.user.photoUrl,
-    });
+    const { content, imageUrl } = createPostSchema.parse(req.body);
+    const post = await postsService.createPost(
+      req.user.userId,
+      content,
+      {
+        username: req.user.username,
+        firstName: req.user.firstName,
+        photoUrl: req.user.photoUrl,
+      },
+      imageUrl
+    );
 
     res.status(201).json({ post });
   } catch (error) {

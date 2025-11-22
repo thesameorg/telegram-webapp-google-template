@@ -37,7 +37,11 @@ export async function handleWebhook(req: Request, res: Response): Promise<void> 
     return void res.status(500).json({ error: 'Bot token not configured' });
   }
 
-  const webAppUrl = process.env.WEB_APP_URL || 'https://your-app.run.app';
+  if (!process.env.WEB_APP_URL) {
+    return void res.status(500).json({ error: 'WEB_APP_URL not configured' });
+  }
+
+  const webAppUrl = process.env.WEB_APP_URL;
   const bot = createBot(webAppUrl);
   await webhookCallback(bot, 'express')(req, res);
 }

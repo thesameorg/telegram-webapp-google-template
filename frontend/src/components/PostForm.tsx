@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { createPost } from '../lib/api';
+import { createPost, uploadImage } from '../lib/api';
 import { Button } from './ui';
+import { ImageUpload } from './ImageUpload';
 import { POST_CHARACTER_LIMIT } from '../lib/constants';
 import { getErrorMessage } from '../lib/utils';
 
@@ -10,14 +11,15 @@ interface PostFormProps {
 
 export function PostForm({ onPostCreated }: PostFormProps) {
   const [content, setContent] = useState('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!content.trim()) {
-      setError('Post cannot be empty');
+    if (!content.trim() && !selectedImage) {
+      setError('Post must have content or an image');
       return;
     }
 
@@ -30,8 +32,19 @@ export function PostForm({ onPostCreated }: PostFormProps) {
     setError(null);
 
     try {
-      await createPost(content);
+      let imageUrl: string | undefined;
+
+      // Upload image first if selected
+      if (selectedImage) {
+        const uploadResult = await uploadImage(selectedImage);
+        imageUrl = uploadResult.imageUrl;
+      }
+
+      // Create post with optional image
+      await createPost(content, imageUrl);
+
       setContent('');
+      setSelectedImage(null);
       onPostCreated();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -41,7 +54,7 @@ export function PostForm({ onPostCreated }: PostFormProps) {
   };
 
   const remainingChars = POST_CHARACTER_LIMIT - content.length;
-  const isValid = content.trim() && content.length <= POST_CHARACTER_LIMIT;
+  const isValid = (content.trim() || selectedImage) && content.length <= POST_CHARACTER_LIMIT;
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-4">
@@ -54,7 +67,15 @@ export function PostForm({ onPostCreated }: PostFormProps) {
           rows={3}
           disabled={isSubmitting}
         />
-        <div className="flex justify-between items-center mt-2">
+
+        <div className="mt-3">
+          <ImageUpload
+            onImageSelect={setSelectedImage}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div className="flex justify-between items-center mt-3">
           <span className={`text-sm ${remainingChars < 0 ? 'text-red-500' : 'text-gray-500'}`}>
             {remainingChars} characters remaining
           </span>

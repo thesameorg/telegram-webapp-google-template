@@ -1,7 +1,10 @@
 import jwt from 'jsonwebtoken';
 import type { JWTPayload } from '../types';
 
-const SECRET = process.env.JWT_SECRET || 'development-secret-change-in-production';
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+const SECRET = process.env.JWT_SECRET;
 
 export const generateToken = (payload: JWTPayload): string =>
   jwt.sign(payload, SECRET, { expiresIn: '7d' });

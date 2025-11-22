@@ -23,6 +23,7 @@ export interface PostDocument {
   id: string;
   userId: string;
   content: string;
+  imageUrl?: string;
   createdAt: string;
   author: {
     username: string;

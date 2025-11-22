@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Post as PostType } from '../lib/api';
 import { formatRelativeDate } from '../lib/utils';
 
@@ -8,6 +9,7 @@ interface PostProps {
 }
 
 export function Post({ post, currentUserId, onDelete }: PostProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
   const canDelete = currentUserId && currentUserId === post.userId;
 
   const handleDelete = () => {
@@ -41,13 +43,35 @@ export function Post({ post, currentUserId, onDelete }: PostProps) {
               <span className="text-gray-400 text-sm">·</span>
               <span className="text-gray-400 text-sm">{formatRelativeDate(post.createdAt)}</span>
             </div>
-            <p className="mt-1 text-gray-800 whitespace-pre-wrap">{post.content}</p>
+
+            {post.content && (
+              <p className="mt-1 text-gray-800 whitespace-pre-wrap">{post.content}</p>
+            )}
+
+            {post.imageUrl && (
+              <div className="mt-3 relative">
+                {!imageLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg min-h-[200px]">
+                    <div className="animate-pulse text-gray-400">Loading...</div>
+                  </div>
+                )}
+                <img
+                  src={post.imageUrl}
+                  alt="Post image"
+                  className={`max-w-full rounded-lg border border-gray-200 transition-opacity duration-300 ${
+                    imageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  loading="lazy"
+                  onLoad={() => setImageLoaded(true)}
+                />
+              </div>
+            )}
           </div>
         </div>
         {canDelete && (
           <button
             onClick={handleDelete}
-            className="text-red-500 hover:text-red-700 text-sm ml-2"
+            className="text-red-500 hover:text-red-700 text-sm ml-2 transition-colors"
             title="Delete post"
           >
             Delete

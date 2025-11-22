@@ -14,6 +14,7 @@ export interface Post {
   id: string;
   userId: string;
   content: string;
+  imageUrl?: string;
   createdAt: string;
   author: {
     username: string;
@@ -79,10 +80,35 @@ export async function getFeed(limit: number = FEED_PAGE_SIZE, startAfter?: strin
   return response.json();
 }
 
-export async function createPost(content: string): Promise<{ post: Post }> {
+export async function uploadImage(imageFile: File): Promise<{ imageUrl: string }> {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+
+  const token = localStorage.getItem(STORAGE_KEYS.JWT);
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_BASE}/upload/image`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem(STORAGE_KEYS.JWT);
+    window.location.reload();
+    throw new Error('Session expired');
+  }
+
+  if (!response.ok) await handleApiError(response, 'Failed to upload image');
+  return response.json();
+}
+
+export async function createPost(content: string, imageUrl?: string): Promise<{ post: Post }> {
   const response = await fetchWithAuth('/posts', {
     method: 'POST',
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, imageUrl }),
   });
 
   if (!response.ok) await handleApiError(response, 'Failed to create post');

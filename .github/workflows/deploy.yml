@@ -19,6 +19,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate secrets
+        run: |
+          [ -n "${{ secrets.GCP_SA_KEY }}" ] || { echo "Missing GCP_SA_KEY"; exit 1; }
+          [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] || { echo "Missing TELEGRAM_BOT_TOKEN"; exit 1; }
+          [ -n "${{ secrets.JWT_SECRET }}" ] || { echo "Missing JWT_SECRET"; exit 1; }
+          [ -n "${{ secrets.FIREBASE_PROJECT_ID }}" ] || { echo "Missing FIREBASE_PROJECT_ID"; exit 1; }
+          [ -n "${{ secrets.FIREBASE_CLIENT_EMAIL }}" ] || { echo "Missing FIREBASE_CLIENT_EMAIL"; exit 1; }
+          [ -n "${{ secrets.FIREBASE_PRIVATE_KEY }}" ] || { echo "Missing FIREBASE_PRIVATE_KEY"; exit 1; }
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -28,23 +37,17 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-      - name: Build Docker image
+      - name: Build and push Docker image
         run: |
-          docker build --platform linux/amd64 -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
-          docker tag ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
-                     ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest
-
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest
+          IMAGE=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}
+          docker build --platform linux/amd64 -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
+          docker push $IMAGE:${{ github.sha }}
+          docker push $IMAGE:latest
 
       - name: Create environment variables file
         run: |
-          # Create env.yaml with proper multiline indentation for private key
           cat > env.yaml << EOF
           NODE_ENV: production
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -56,8 +59,6 @@ jobs:
           STORAGE_BUCKET: ${{ vars.STORAGE_BUCKET }}
           WEB_APP_URL: ${{ vars.WEB_APP_URL }}
           EOF
-
-          echo "✅ Created env.yaml file"
 
       - name: Deploy to Cloud Run
         run: |
@@ -81,60 +82,13 @@ jobs:
             --region=${{ env.GCP_REGION }} \
             --format='value(status.url)')
           echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "🚀 Deployed to: $URL"
 
       - name: Set Telegram Webhook
         if: ${{ vars.WEB_APP_URL != '' }}
         run: |
-          WEBHOOK_URL="${{ steps.get-url.outputs.url }}/webhook"
-          echo "Setting webhook to: $WEBHOOK_URL"
-
-          RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/setWebhook" \
+          curl -sf -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/setWebhook" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"url\": \"${WEBHOOK_URL}\",
-              \"allowed_updates\": [\"message\"],
-              \"drop_pending_updates\": true
-            }")
-
-          echo "$RESPONSE"
-
-          if echo "$RESPONSE" | grep -q '"ok":true'; then
-            echo "✅ Webhook configured successfully"
-          else
-            echo "⚠️ Webhook configuration may have failed - check manually"
-          fi
+            -d '{"url": "${{ steps.get-url.outputs.url }}/webhook", "allowed_updates": ["message"], "drop_pending_updates": true}' | grep -q '"ok":true'
 
       - name: Verify Deployment
-        run: |
-          URL="${{ steps.get-url.outputs.url }}"
-
-          # Wait for service to be ready
-          echo "Waiting for service to be ready..."
-          sleep 10
-
-          # Check health endpoint
-          echo "Checking health endpoint..."
-          HEALTH=$(curl -s "$URL/health" || echo '{"status":"error"}')
-          echo "Health check response: $HEALTH"
-
-          if echo "$HEALTH" | grep -q '"status":"ok"'; then
-            echo "✅ Service is healthy"
-          else
-            echo "⚠️ Service health check failed"
-          fi
-
-      - name: Summary
-        run: |
-          echo "## Deployment Summary 🚀" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Service**: ${{ env.SERVICE_NAME }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Region**: ${{ env.GCP_REGION }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL**: ${{ steps.get-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Update WEB_APP_URL variable if this is first deployment" >> $GITHUB_STEP_SUMMARY
-          echo "2. Test bot: Send /start to your Telegram bot" >> $GITHUB_STEP_SUMMARY
-          echo "3. Open WebApp and try posting" >> $GITHUB_STEP_SUMMARY
-          echo "4. Check logs: \`gcloud run logs tail ${{ env.SERVICE_NAME }} --region=${{ env.GCP_REGION }}\`" >> $GITHUB_STEP_SUMMARY
+        run: sleep 10 && curl -sf "${{ steps.get-url.outputs.url }}/health" | grep -q '"status":"ok"'

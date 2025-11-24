@@ -9,4 +9,4 @@
 
 
 4. make simple docs + quickstart
-5. fresh-run. delete all shit & do from scratch.
+5. fresh-run. delete all shit & do from scratch. - задеплоить отдельным проектом в gcloud.

@@ -42,7 +42,7 @@ export function Feed() {
   const handleDelete = async (postId: string) => {
     try {
       await deletePost(postId);
-      setPosts(posts.filter((p) => p.id !== postId));
+      setPosts((prevPosts) => prevPosts.filter((p) => p.id !== postId));
     } catch (err) {
       alert(getErrorMessage(err));
     }

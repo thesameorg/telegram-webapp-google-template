@@ -1,7 +1,5 @@
 
 2. check webhook for localhost, localhost + docker work.
-`
-1. do we really need react router? maybe remove all except deployed state? idk... 
 
 3. simplify shit
     - local run methods 

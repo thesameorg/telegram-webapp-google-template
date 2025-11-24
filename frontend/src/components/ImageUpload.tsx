@@ -1,10 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import {
-  validateImageFile,
-  resizeImage,
-  createImagePreviewUrl,
-  revokeImagePreviewUrl
-} from '../lib/imageUtils';
+import { validateImageFile, resizeImage } from '../lib/imageUtils';
 
 interface ImageUploadProps {
   onImageSelect: (file: File | null) => void;
@@ -18,7 +13,7 @@ export function ImageUpload({ onImageSelect, disabled }: ImageUploadProps) {
 
   useEffect(() => {
     return () => {
-      if (previewUrl) revokeImagePreviewUrl(previewUrl);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
@@ -36,10 +31,9 @@ export function ImageUpload({ onImageSelect, disabled }: ImageUploadProps) {
 
     try {
       const resizedFile = await resizeImage(file);
-      const preview = createImagePreviewUrl(resizedFile);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
 
-      if (previewUrl) revokeImagePreviewUrl(previewUrl);
-
+      const preview = URL.createObjectURL(resizedFile);
       setPreviewUrl(preview);
       onImageSelect(resizedFile);
     } catch (err) {
@@ -48,7 +42,7 @@ export function ImageUpload({ onImageSelect, disabled }: ImageUploadProps) {
   };
 
   const handleRemove = () => {
-    if (previewUrl) revokeImagePreviewUrl(previewUrl);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
 
     setPreviewUrl(null);
     setError(null);

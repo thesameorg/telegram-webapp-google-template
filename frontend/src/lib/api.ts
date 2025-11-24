@@ -81,17 +81,15 @@ export async function getFeed(limit: number = FEED_PAGE_SIZE, startAfter?: strin
 }
 
 export async function uploadImage(imageFile: File): Promise<{ imageUrl: string }> {
-  const formData = new FormData();
-  formData.append('image', imageFile);
-
   const token = localStorage.getItem(STORAGE_KEYS.JWT);
   if (!token) throw new Error('Not authenticated');
 
+  const formData = new FormData();
+  formData.append('image', imageFile);
+
   const response = await fetch(`${API_BASE}/upload/image`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: { 'Authorization': `Bearer ${token}` },
     body: formData,
   });
 

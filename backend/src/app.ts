@@ -19,10 +19,12 @@ if (!process.env.WEB_APP_URL) {
   throw new Error('WEB_APP_URL environment variable is required');
 }
 
-app.use(cors({
-  origin: process.env.WEB_APP_URL,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.WEB_APP_URL,
+    credentials: true,
+  })
+);
 
 // API Routes
 app.get('/health', healthHandler);

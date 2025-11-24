@@ -9,8 +9,8 @@ const createBot = (webAppUrl: string) => {
       `👋 Welcome ${ctx.from?.first_name || 'User'}!\n\nOpen the app to start posting and see the global feed!`,
       {
         reply_markup: {
-          inline_keyboard: [[{ text: '🚀 Open App', web_app: { url: webAppUrl } }]]
-        }
+          inline_keyboard: [[{ text: '🚀 Open App', web_app: { url: webAppUrl } }]],
+        },
       }
     );
   });

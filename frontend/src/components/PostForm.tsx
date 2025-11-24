@@ -69,10 +69,7 @@ export function PostForm({ onPostCreated }: PostFormProps) {
         />
 
         <div className="mt-3">
-          <ImageUpload
-            onImageSelect={setSelectedImage}
-            disabled={isSubmitting}
-          />
+          <ImageUpload onImageSelect={setSelectedImage} disabled={isSubmitting} />
         </div>
 
         <div className="flex justify-between items-center mt-3">

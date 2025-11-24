@@ -19,14 +19,17 @@ export class PostsService {
       content,
       createdAt: new Date().toISOString(),
       author,
-      ...(imageUrl && { imageUrl })
+      ...(imageUrl && { imageUrl }),
     };
     const collection = await this.getCollection();
     const docRef = await collection.add(postData);
     return { id: docRef.id, ...postData };
   }
 
-  async getFeed(limit = 20, startAfter?: string): Promise<{
+  async getFeed(
+    limit = 20,
+    startAfter?: string
+  ): Promise<{
     posts: PostDocument[];
     nextCursor?: string;
   }> {
@@ -39,21 +42,21 @@ export class PostsService {
     }
 
     const snapshot = await query.get();
-    const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PostDocument));
+    const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as PostDocument);
     const hasMore = posts.length > limit;
 
     if (hasMore) posts.pop();
 
     return {
       posts,
-      ...(hasMore && posts.length > 0 && { nextCursor: posts[posts.length - 1].id })
+      ...(hasMore && posts.length > 0 && { nextCursor: posts[posts.length - 1].id }),
     };
   }
 
   async getPost(postId: string): Promise<PostDocument | null> {
     const collection = await this.getCollection();
     const doc = await collection.doc(postId).get();
-    return doc.exists ? { id: doc.id, ...doc.data() } as PostDocument : null;
+    return doc.exists ? ({ id: doc.id, ...doc.data() } as PostDocument) : null;
   }
 
   async deletePost(postId: string, userId: string): Promise<boolean> {
@@ -64,7 +67,7 @@ export class PostsService {
 
     const post = doc.data() as PostDocument;
     if (post.userId !== userId) {
-      throw new Error('Unauthorized: Cannot delete another user\'s post');
+      throw new Error("Unauthorized: Cannot delete another user's post");
     }
 
     // Delete image from storage if exists

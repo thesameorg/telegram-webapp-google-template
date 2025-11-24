@@ -93,26 +93,34 @@ export class TelegramAuthService {
   private async computeHMAC(key: CryptoKey, data: string): Promise<string> {
     const signature = await crypto.subtle.sign('HMAC', key, ENCODER.encode(data));
     return Array.from(new Uint8Array(signature))
-      .map(b => b.toString(16).padStart(2, '0'))
+      .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
   }
 
-  private validateUser(user: any): TelegramUser {
-    if (!user.id || typeof user.id !== 'number') {
+  private validateUser(user: unknown): TelegramUser {
+    // Type guard to check if user is an object
+    if (!user || typeof user !== 'object') {
+      throw new Error('Invalid user object');
+    }
+
+    const userData = user as Record<string, unknown>;
+
+    if (!userData.id || typeof userData.id !== 'number') {
       throw new Error('Invalid user.id');
     }
-    if (!user.first_name || typeof user.first_name !== 'string') {
+    if (!userData.first_name || typeof userData.first_name !== 'string') {
       throw new Error('Invalid user.first_name');
     }
 
     return {
-      id: user.id,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      username: user.username,
-      language_code: user.language_code,
-      is_premium: user.is_premium,
-      photo_url: user.photo_url,
+      id: userData.id,
+      first_name: userData.first_name,
+      last_name: typeof userData.last_name === 'string' ? userData.last_name : undefined,
+      username: typeof userData.username === 'string' ? userData.username : undefined,
+      language_code:
+        typeof userData.language_code === 'string' ? userData.language_code : undefined,
+      is_premium: typeof userData.is_premium === 'boolean' ? userData.is_premium : undefined,
+      photo_url: typeof userData.photo_url === 'string' ? userData.photo_url : undefined,
     };
   }
 }

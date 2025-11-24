@@ -17,7 +17,6 @@ export interface JWTPayload {
   photoUrl?: string;
 }
 
-
 // Post Document
 export interface PostDocument {
   id: string;
@@ -34,6 +33,7 @@ export interface PostDocument {
 
 // Express Request with User
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: JWTPayload;

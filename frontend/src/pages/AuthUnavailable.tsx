@@ -17,15 +17,15 @@ export function AuthUnavailable() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">
-          Telegram Authentication Required
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Telegram Authentication Required</h1>
         <p className="text-gray-600 mb-6">
-          This app can only be accessed through Telegram. Please open it from within the Telegram app.
+          This app can only be accessed through Telegram. Please open it from within the Telegram
+          app.
         </p>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">
-            If you're trying to access this app, make sure you have the correct Telegram bot link.
+            If you&apos;re trying to access this app, make sure you have the correct Telegram bot
+            link.
           </p>
         </div>
       </div>

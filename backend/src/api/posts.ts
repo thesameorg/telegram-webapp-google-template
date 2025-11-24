@@ -10,7 +10,10 @@ const createPostSchema = z.object({
 });
 
 const getFeedSchema = z.object({
-  limit: z.string().optional().transform(val => val ? parseInt(val) : 20),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val) : 20)),
   startAfter: z.string().optional(),
 });
 

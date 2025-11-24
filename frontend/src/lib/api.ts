@@ -59,7 +59,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
     ...options,
     headers: {
       ...options.headers,
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
@@ -73,7 +73,10 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   return response;
 }
 
-export async function getFeed(limit: number = FEED_PAGE_SIZE, startAfter?: string): Promise<FeedResponse> {
+export async function getFeed(
+  limit: number = FEED_PAGE_SIZE,
+  startAfter?: string
+): Promise<FeedResponse> {
   const url = `${API_BASE}/posts?limit=${limit}${startAfter ? `&startAfter=${startAfter}` : ''}`;
   const response = await fetch(url);
   if (!response.ok) await handleApiError(response, 'Failed to fetch feed');
@@ -89,7 +92,7 @@ export async function uploadImage(imageFile: File): Promise<{ imageUrl: string }
 
   const response = await fetch(`${API_BASE}/upload/image`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 

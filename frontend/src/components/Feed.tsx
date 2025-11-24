@@ -19,7 +19,7 @@ export function Feed() {
   const loadFeed = async (cursor?: string) => {
     try {
       const data = await getFeed(FEED_PAGE_SIZE, cursor);
-      setPosts(prev => cursor ? [...prev, ...data.posts] : data.posts);
+      setPosts((prev) => (cursor ? [...prev, ...data.posts] : data.posts));
       setNextCursor(data.nextCursor);
       setError(null);
     } catch (err) {
@@ -42,7 +42,7 @@ export function Feed() {
   const handleDelete = async (postId: string) => {
     try {
       await deletePost(postId);
-      setPosts(posts.filter(p => p.id !== postId));
+      setPosts(posts.filter((p) => p.id !== postId));
     } catch (err) {
       alert(getErrorMessage(err));
     }
@@ -56,7 +56,16 @@ export function Feed() {
   };
 
   if (loading) return <Loading message="Loading feed..." />;
-  if (error) return <ErrorMessage message={error} onRetry={() => { setLoading(true); loadFeed(); }} />;
+  if (error)
+    return (
+      <ErrorMessage
+        message={error}
+        onRetry={() => {
+          setLoading(true);
+          loadFeed();
+        }}
+      />
+    );
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -65,12 +74,10 @@ export function Feed() {
       <PostForm onPostCreated={handlePostCreated} />
 
       {posts.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          No posts yet. Be the first to post!
-        </div>
+        <div className="text-center py-8 text-gray-500">No posts yet. Be the first to post!</div>
       )}
 
-      {posts.map(post => (
+      {posts.map((post) => (
         <Post
           key={post.id}
           post={post}

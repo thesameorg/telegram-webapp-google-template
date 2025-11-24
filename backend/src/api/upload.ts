@@ -34,10 +34,7 @@ export async function uploadImage(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const imageUrl = await storageService.uploadPostImage(
-      req.file.buffer,
-      req.user.userId
-    );
+    const imageUrl = await storageService.uploadPostImage(req.file.buffer, req.user.userId);
 
     res.json({ imageUrl });
   } catch (error) {

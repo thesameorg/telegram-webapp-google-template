@@ -19,9 +19,6 @@ export default defineConfig(({ mode }) => {
         '.ngrok.io',
         'localhost',
       ],
-      hmr: {
-        clientPort: 443,
-      },
       proxy: {
         '/api': {
           target: 'http://localhost:8080',

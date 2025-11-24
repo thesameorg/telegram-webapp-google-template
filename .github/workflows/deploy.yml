@@ -19,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate secrets
+      - name: Validate secrets and vars
         run: |
           [ -n "${{ secrets.GCP_SA_KEY }}" ] || { echo "Missing GCP_SA_KEY"; exit 1; }
           [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] || { echo "Missing TELEGRAM_BOT_TOKEN"; exit 1; }
@@ -27,6 +27,11 @@ jobs:
           [ -n "${{ secrets.FIREBASE_PROJECT_ID }}" ] || { echo "Missing FIREBASE_PROJECT_ID"; exit 1; }
           [ -n "${{ secrets.FIREBASE_CLIENT_EMAIL }}" ] || { echo "Missing FIREBASE_CLIENT_EMAIL"; exit 1; }
           [ -n "${{ secrets.FIREBASE_PRIVATE_KEY }}" ] || { echo "Missing FIREBASE_PRIVATE_KEY"; exit 1; }
+          [ -n "${{ env.GCP_PROJECT_ID }}" ] || { echo "Missing GCP_PROJECT_ID"; exit 1; }
+          [ -n "${{ env.GCP_REGION }}" ] || { echo "Missing GCP_REGION"; exit 1; }
+          [ -n "${{ env.SERVICE_NAME }}" ] || { echo "Missing SERVICE_NAME"; exit 1; }
+          [ -n "${{ vars.STORAGE_BUCKET }}" ] || { echo "Missing STORAGE_BUCKET"; exit 1; }
+          [ -n "${{ vars.WEB_APP_URL }}" ] || { echo "Missing WEB_APP_URL"; exit 1; }
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -91,4 +96,4 @@ jobs:
             -d '{"url": "${{ steps.get-url.outputs.url }}/webhook", "allowed_updates": ["message"], "drop_pending_updates": true}' | grep -q '"ok":true'
 
       - name: Verify Deployment
-        run: sleep 10 && curl -sf "${{ steps.get-url.outputs.url }}/health" | grep -q '"status":"ok"'
+        run: sleep 5 && curl -sf "${{ steps.get-url.outputs.url }}/health" | grep -q '"status":"ok"'

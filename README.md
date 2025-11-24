@@ -1,7 +1,3 @@
-Вот финальная версия README с вынесением деталей в документацию:
-
----
-
 # Telegram Bot + Google Cloud Run Template
 
 **Production-ready Node.js + TypeScript template for building Telegram bots and Web Apps deployed on Google Cloud Run.** Includes native Telegram authentication, stateless JWT auth, React frontend with Tailwind CSS, and automated GitHub Actions deployment.
@@ -447,21 +443,3 @@ Before launching:
 - [Telegraf.js](https://telegraf.js.org/) — Bot framework used in this template
 - [React Documentation](https://react.dev/)
 - [Tailwind CSS](https://tailwindcss.com/)
-
-**Community:**
-- [Telegram Bot Developers](https://t.me/botdevelopers)
-- [Google Cloud Community](https://www.googlecloudcommunity.com/)
-
----
-
-## License
-
-MIT License — see [LICENSE](LICENSE) file.
-
-## Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-**Questions or Issues?** Open an issue on GitHub or check [existing discussions](---).

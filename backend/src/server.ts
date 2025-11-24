@@ -1,10 +1,5 @@
-// Load environment variables from .env file in development
-import { config } from 'dotenv';
-import { resolve } from 'path';
-
-if (process.env.NODE_ENV !== 'production') {
-  config({ path: resolve(__dirname, '../../.env') });
-}
+// Load environment variables BEFORE any other imports
+import './load-env';
 
 import app from './app';
 

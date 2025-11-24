@@ -56,6 +56,7 @@ case "$1" in
       -e FIREBASE_CLIENT_EMAIL="$FIREBASE_CLIENT_EMAIL" \
       -e FIREBASE_PRIVATE_KEY="$FIREBASE_PRIVATE_KEY" \
       -e WEB_APP_URL="$WEB_APP_URL" \
+      -e STORAGE_BUCKET="$STORAGE_BUCKET" \
       "$IMAGE_NAME"
 
     echo "✅ Container started: $CONTAINER_NAME"

@@ -8,5 +8,8 @@
     - dockefile, compose, etc.
 
 
-4. make simple docs + quickstart
-5. fresh-run. delete all shit & do from scratch. - задеплоить отдельным проектом в gcloud.
+5. fresh-run. delete all shit & do from scratch - separate gcloud project. 
+
+6. update repo to make it template
+
+4. OK readme, not this shit

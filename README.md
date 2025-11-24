@@ -1,198 +1,467 @@
-# Telegram WebApp Google Cloud Template
+Вот финальная версия README с вынесением деталей в документацию:
 
-A minimalist TeleGoog App with Telegram WebApp authentication, deployed on Google Cloud Run.
+---
+
+# Telegram Bot + Google Cloud Run Template
+
+**Production-ready Node.js + TypeScript template for building Telegram bots and Web Apps deployed on Google Cloud Run.** Includes native Telegram authentication, stateless JWT auth, React frontend with Tailwind CSS, and automated GitHub Actions deployment.
+
+---
 
 ## Features
 
-- ✅ Telegram WebApp authentication (no separate signup)
-- ✅ Post short text messages (280 chars)
-- ✅ Global feed (newest first)
-- ✅ Bot commands (`/start`, `/help`)
-- ✅ Deployed as single Docker container
-- ✅ Firestore database (serverless)
-- ✅ JWT-based auth (stateless)
-- ✅ GitHub Actions CI/CD
-- ✅ Free tier eligible
+🔐 **Authentication Built-in**
+- Native Telegram Web App authentication (no database required)
+- Stateless JWT tokens for API security
+- Full example implementation included
 
-## Tech Stack
+☁️ **Google Cloud Free Tier**
+- Cloud Run (2M requests/month free)
+- Artifact Registry (0.5 GB storage free)
+- Cloud Storage (5 GB + free egress)
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Frontend | React + Vite + Tailwind | Modern, fast, developer-friendly |
-| Backend | Express + Node.js 20 | Battle-tested, perfect for Cloud Run |
-| Database | Firestore | Serverless, no connection management |
-| Auth | Telegram WebApp + JWT | Secure, no password management |
-| Bot | Grammy.js | Best TypeScript bot framework |
-| Runtime | Cloud Run | Serverless, auto-scaling, free tier |
-| CI/CD | GitHub Actions | Automated deployments |
-| Container | Docker (multi-stage) | Small image (~120MB) |
+🛠️ **Modern Stack**
+- Node.js + TypeScript backend
+- React + Tailwind CSS frontend
+- Type-safe API contracts
+
+🚀 **Deployment Ready**
+- GitHub Actions CI/CD pipeline
+- Automatic container builds
+- Zero-downtime deployments
+
+🏃 **Three Run Modes**
+- Local development (`npm run dev`)
+- Local in Docker (`docker-compose up`)
+- Production on Cloud Run
+
+📸 **Example Features**
+- Single feed with posts
+- Image upload to Cloud Storage
+- CORS configured for Web App
+
+---
 
 ## Quick Start
 
-### 1. Prerequisites
+### Prerequisites
 
-- GitHub account with access to this repository
-- Google Cloud account ([sign up free](https://cloud.google.com/free))
-- Telegram account
+- [Node.js](https://nodejs.org/) v18+ and npm
+- [Docker](https://www.docker.com/) (optional, for local container testing)
+- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) configured
+- Telegram bot token from [@BotFather](https://t.me/BotFather)
 
-### 2. Setup
-
-Follow the detailed setup guide in [`docs/SETUP_CHECKLIST.md`](docs/SETUP_CHECKLIST.md).
-
-Quick summary:
-1. Create a Telegram bot via [@BotFather](https://t.me/botfather)
-2. Set up Google Cloud project and Firestore
-3. Configure GitHub Secrets
-4. Deploy!
-
-### 3. Local Development
+### Local Development
 
 ```bash
-# Install dependencies
+# Clone and install
+git clone <repo-url>
+cd telegram-gcloud-template
 npm install
-cd backend && npm install
-cd ../frontend && npm install
 
-# Start development servers
+# Configure environment
+cp .env.example .env
+# Edit .env with your tokens (see Configuration section)
+
+# Run backend + frontend
 npm run dev
-
-# In another terminal, start ngrok tunnel
-npm run tunnel:start
-
-# Set Telegram webhook
-npm run webhook:set
 ```
 
-## Documentation
+Frontend available at `http://localhost:3000`, backend at `http://localhost:8080`.
 
-- **[Setup Checklist](docs/SETUP_CHECKLIST.md)** - Complete setup guide
-- **[Architecture](docs/architecture.md)** - Tech stack and design decisions
-- **[Telegram Auth](docs/telegram-auth.md)** - How authentication works
-- **[Webhook Setup](docs/webhook-setup.md)** - Bot webhook configuration
-- **[Deployment](docs/deployment.md)** - Cloud Run deployment guide
+### Local with Docker
+
+```bash
+# Build and run containers
+docker-compose up
+
+# Access at http://localhost:8080
+```
+
+### Deploy to Google Cloud Run
+
+```bash
+# One-time setup: enable APIs
+gcloud services enable run.googleapis.com \
+  artifactregistry.googleapis.com \
+  storage.googleapis.com
+
+# Create storage bucket
+gsutil mb -l us-central1 gs://your-bucket-name
+
+# Deploy
+gcloud run deploy telegram-bot \
+  --source . \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars TELEGRAM_BOT_TOKEN=xxx,JWT_SECRET=yyy,GCS_BUCKET_NAME=your-bucket-name
+
+# Get URL and set webhook
+WEBHOOK_URL=$(gcloud run services describe telegram-bot --format='value(status.url)')
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook?url=${WEBHOOK_URL}/webhook"
+```
+
+**Automated deployment:** Just push to `main` branch — GitHub Actions handles the rest. See [Deployment Guide](docs/deployment.md).
+
+---
 
 ## Project Structure
 
 ```
-telegram-webapp-google-template/
-├── backend/
-│   ├── src/
-│   │   ├── config/         # Firebase configuration
-│   │   ├── services/       # Business logic
-│   │   ├── middleware/     # Express middleware
-│   │   ├── api/            # API endpoints
-│   │   ├── webhook.ts      # Telegram bot handler
-│   │   ├── app.ts          # Express app setup
-│   │   └── server.ts       # Entry point
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── lib/            # Utilities
-│   │   ├── App.tsx         # Main app component
-│   │   └── main.tsx        # Entry point
-│   └── package.json
-├── docs/                   # Documentation
-├── scripts/                # Dev tools
-├── .github/workflows/      # CI/CD
-└── Dockerfile             # Multi-stage build
+telegram-gcloud-template/
+├── src/
+│   ├── backend/
+│   │   ├── bot/
+│   │   │   ├── handlers/          # Command and message handlers
+│   │   │   └── index.ts           # Bot initialization
+│   │   ├── api/
+│   │   │   ├── routes/            # Express API routes
+│   │   │   ├── middleware/        # JWT auth, CORS
+│   │   │   └── controllers/       # Business logic
+│   │   ├── services/
+│   │   │   ├── auth.ts            # Telegram auth + JWT
+│   │   │   ├── storage.ts         # Cloud Storage integration
+│   │   │   └── feed.ts            # Feed/posts logic
+│   │   └── server.ts              # Express app entry point
+│   ├── frontend/
+│   │   ├── src/
+│   │   │   ├── components/        # React components
+│   │   │   ├── pages/             # Feed, Upload, etc.
+│   │   │   ├── hooks/             # Custom React hooks
+│   │   │   ├── utils/             # Telegram auth helpers
+│   │   │   └── App.tsx            # Main React app
+│   │   ├── index.html
+│   │   └── tailwind.config.js
+│   └── shared/
+│       └── types.ts               # Shared TypeScript types
+├── .github/
+│   └── workflows/
+│       └── deploy.yml             # GitHub Actions CI/CD
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
 
-## Scripts
+### Key Files
+
+- **`src/backend/server.ts`** — Express app with webhook + API endpoints
+- **`src/backend/services/auth.ts`** — Telegram auth validation + JWT generation
+- **`src/frontend/src/App.tsx`** — React Web App entry point
+- **`.github/workflows/deploy.yml`** — Automated deployment pipeline
+
+---
+
+## Configuration
+
+### Environment Variables
+
+Create `.env` file (copy from `.env.example`):
 
 ```bash
-# Development
-npm run dev              # Start backend + frontend
-npm run dev:backend      # Backend only
-npm run dev:frontend     # Frontend only
+# Required - Telegram
+TELEGRAM_BOT_TOKEN=1234567890:XXXXXXXXXXXXXXXXXXXXXXXXXXX
+BOT_USERNAME=your_bot_username
 
-# Build
-npm run build            # Build both
-npm run build:backend    # Backend only
-npm run build:frontend   # Frontend only
+# Required - Auth
+JWT_SECRET=---                      # Random 32+ char string for signing tokens
+JWT_EXPIRES_IN=7d                   # Token expiration
 
-# Tunnel & Webhook (local dev)
-npm run tunnel:start     # Start ngrok tunnel
-npm run tunnel:stop      # Stop ngrok tunnel
-npm run tunnel:status    # Check tunnel status
-npm run webhook:set      # Set webhook to tunnel
-npm run webhook:status   # Check webhook status
-npm run webhook:clear    # Clear webhook
+# Required - Google Cloud
+GOOGLE_CLOUD_PROJECT=---            # Your GCP project ID
+GCS_BUCKET_NAME=---                 # Bucket for image uploads
+REGION=us-central1                  # Cloud Run region
+
+# Optional - Development
+PORT=8080
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:3000   # Frontend URL for local dev
+
+# Optional - AI Integration
+OPENAI_API_KEY=---
+ANTHROPIC_API_KEY=---
 ```
 
-## Environment Variables
+For production deployment, set these via:
+- **GitHub Actions:** Repository Secrets (see [Deployment Guide](docs/deployment.md))
+- **Cloud Run Console:** Edit & Deploy New Revision → Environment Variables
+- **gcloud CLI:** `--set-env-vars` flag
 
-See [`.env.example`](.env.example) for all required environment variables.
+---
 
-### Required for Deployment
+## Core Features
 
-Set these in GitHub Secrets:
-- `TELEGRAM_BOT_TOKEN` - Your bot token from @BotFather
-- `JWT_SECRET` - Random secret (generate with `openssl rand -hex 32`)
-- `FIREBASE_PROJECT_ID` - Firebase project ID
-- `FIREBASE_CLIENT_EMAIL` - Firebase service account email
-- `FIREBASE_PRIVATE_KEY` - Firebase private key
-- `GCP_SA_KEY` - Google Cloud service account key (base64)
-- `GCP_PROJECT_ID` - Google Cloud project ID
+### 🔐 Authentication
+
+Template includes **native Telegram authentication** with **stateless JWT tokens** — no database required for auth.
+
+**How it works:**
+1. User opens bot → clicks "Launch App"
+2. Telegram Web App opens with signed auth data
+3. Backend validates signature using bot token
+4. Backend issues JWT for API access
+5. Frontend includes JWT in subsequent requests
+
+**Implementation:** See [Authentication Guide](docs/authentication.md) for complete flow and code examples.
+
+### 📸 Image Feed Example
+
+Working example feature demonstrating:
+- Image upload from frontend
+- Storage in Google Cloud Storage
+- Public URL generation
+- Feed retrieval with authentication
+
+**Endpoints:**
+- `POST /api/feed/upload` — Upload image (multipart/form-data)
+- `GET /api/feed` — Retrieve feed posts (requires JWT)
+
+**Usage:** See [Feed Feature Guide](docs/features/feed.md) for API details and frontend integration.
+
+### 🌐 CORS Configuration
+
+Pre-configured for Telegram Web Apps with support for:
+- Telegram Web App iframe (`https://web.telegram.org`)
+- Local development server
+- Custom origins via environment variable
+
+**Configuration:** See [CORS Setup](docs/cors.md) for customization options.
+
+---
+
+## Development Workflows
+
+### Adding Bot Commands
+
+Edit `src/backend/bot/handlers/commands.ts`:
+
+```typescript
+bot.command('mycommand', async (ctx) => {
+  await ctx.reply('Response from new command');
+});
+```
+
+### Adding API Endpoints
+
+1. Create controller in `src/backend/api/controllers/`
+2. Add route in `src/backend/api/routes/`
+3. Add middleware if needed (auth, validation)
+
+**Example:** See [API Development Guide](docs/development/api.md)
+
+### Adding Frontend Pages
+
+1. Create component in `src/frontend/src/pages/`
+2. Add route in `src/frontend/src/App.tsx`
+3. Style with Tailwind CSS classes
+
+**Example:** See [Frontend Development Guide](docs/development/frontend.md)
+
+### Integrating AI Services
+
+Template structure supports easy AI integration:
+
+```typescript
+// src/backend/services/ai.ts
+import OpenAI from 'openai';
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export async function getAIResponse(prompt: string) {
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4',
+    messages: [{ role: 'user', content: prompt }]
+  });
+  return response.choices[0].message.content;
+}
+```
+
+**Examples:**
+- [OpenAI Integration](docs/integrations/openai.md)
+- [Anthropic Claude Integration](docs/integrations/anthropic.md)
+- [Google Gemini Integration](docs/integrations/gemini.md)
+
+---
 
 ## Deployment
 
-Deployment happens automatically via GitHub Actions when you push to `main`.
+### Local Development Mode
 
-For manual deployment:
 ```bash
-# Build and deploy
-gcloud run deploy telegoog-app --source=.
+npm run dev
 ```
 
-See [docs/deployment.md](docs/deployment.md) for detailed deployment guide.
+- Backend runs on port 8080
+- Frontend runs on port 3000 (Vite dev server)
+- Hot reload enabled
+- Uses local file system (no Cloud Storage needed)
+- CORS configured for `localhost:3000`
 
-## Cost Estimate
+### Local Docker Mode
 
-**Free tier covers**:
-- Cloud Run: 2M requests/month
-- Firestore: 50K reads, 20K writes per day
-- Artifact Registry: 500MB storage
+```bash
+docker-compose up
+```
 
-**Expected cost**: $0-2/month for personal project
+- Simulates production environment
+- Both services in containers
+- Accesses Cloud Storage (requires credentials)
+- Tests deployment configuration
 
-## Security
+### Production Deployment
 
-- ✅ Telegram initData validation with HMAC
-- ✅ JWT tokens with expiration
-- ✅ CORS configuration
-- ✅ Environment-based secrets
-- ✅ GitHub Secrets for sensitive data
+**Via GitHub Actions (Recommended):**
+1. Push to `main` branch
+2. GitHub Actions automatically builds and deploys
+3. Zero downtime deployment
+
+**Manual deployment:**
+```bash
+gcloud run deploy telegram-bot --source .
+```
+
+**Detailed guides:**
+- [GitHub Actions Setup](docs/deployment.md#github-actions)
+- [Manual Deployment](docs/deployment.md#manual)
+- [Environment Configuration](docs/deployment.md#environment)
+- [Troubleshooting](docs/troubleshooting.md)
+
+---
+
+## Google Cloud Free Tier Usage
+
+This template is optimized to stay within free tier limits:
+
+| Service | Free Tier | Typical Usage |
+|---------|-----------|---------------|
+| **Cloud Run** | 2M requests/month | ~65K requests/day |
+| | 360K GB-seconds | ~1 instance running 24/7 |
+| **Artifact Registry** | 0.5 GB storage | ~5-10 container images |
+| **Cloud Storage** | 5 GB storage | ~5K images (1MB each) |
+| | 1 GB egress/month | --- |
+
+**Cost optimization tips:**
+- Cloud Run scales to zero when idle (no requests = no cost)
+- Artifact Registry: Clean old images periodically
+- Cloud Storage: Use lifecycle policies to delete old files
+
+**Monitoring costs:** See [Cost Optimization Guide](docs/cost-optimization.md)
+
+---
+
+## Production Checklist
+
+Before launching:
+
+- [ ] Set strong `JWT_SECRET` (32+ random characters)
+- [ ] Configure webhook secret for security
+- [ ] Enable Cloud Logging and monitoring
+- [ ] Set up error alerting (Cloud Monitoring or external service)
+- [ ] Configure Cloud Storage CORS for your domain
+- [ ] Test authentication flow end-to-end
+- [ ] Review [Cloud Run security best practices](https://cloud.google.com/run/docs/securing/overview)
+- [ ] Set appropriate Cloud Run resource limits
+- [ ] Configure custom domain (optional)
+- [ ] Set up backup strategy for uploaded images
+
+**Full checklist:** See [Production Deployment Checklist](docs/production-checklist.md)
+
+---
 
 ## Troubleshooting
 
-### "Invalid initData signature"
-- Wrong bot token in GitHub Secrets
-- Check `TELEGRAM_BOT_TOKEN` value
+**Webhook not receiving messages?**
+- Check webhook status: `https://api.telegram.org/bot<TOKEN>/getWebhookInfo`
+- Verify Cloud Run service is publicly accessible
+- Check logs: `gcloud run logs read --service telegram-bot`
 
-### "Webhook not receiving updates"
-- Run `npm run webhook:status`
-- Re-set webhook: `npm run webhook:set`
+**Authentication failing?**
+- Verify `TELEGRAM_BOT_TOKEN` matches BotFather token
+- Check `JWT_SECRET` is set in environment
+- Ensure frontend sends `initData` correctly
 
-### "Deployment fails"
-- Check GitHub Actions logs
-- Verify all secrets are set correctly
-- Check GCP permissions
+**Image upload not working?**
+- Verify Cloud Storage bucket exists and is accessible
+- Check service account has Storage Admin permissions
+- Confirm CORS is configured on bucket
 
-## Contributing
+**GitHub Actions deployment failing?**
+- Verify all repository secrets are set correctly
+- Check service account permissions
+- Review workflow logs in Actions tab
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test locally
-5. Submit a pull request
+**Complete troubleshooting guide:** [docs/troubleshooting.md](docs/troubleshooting.md)
+
+---
+
+## Documentation
+
+### Getting Started
+- [Installation Guide](docs/installation.md)
+- [Configuration Reference](docs/configuration.md)
+- [Local Development](docs/development/local.md)
+
+### Core Features
+- [Authentication Flow](docs/authentication.md)
+- [Image Feed Feature](docs/features/feed.md)
+- [CORS Configuration](docs/cors.md)
+
+### Development
+- [Adding Bot Commands](docs/development/bot-commands.md)
+- [API Development](docs/development/api.md)
+- [Frontend Development](docs/development/frontend.md)
+- [TypeScript Guide](docs/development/typescript.md)
+
+### Deployment
+- [GitHub Actions Setup](docs/deployment.md)
+- [Manual Deployment](docs/deployment.md#manual)
+- [Environment Variables](docs/deployment.md#environment)
+- [Custom Domains](docs/deployment.md#custom-domains)
+
+### Integrations
+- [Google Cloud Storage](docs/integrations/cloud-storage.md)
+- [OpenAI Integration](docs/integrations/openai.md)
+- [Anthropic Claude](docs/integrations/anthropic.md)
+- [Other AI Services](docs/integrations/ai-services.md)
+
+### Operations
+- [Monitoring & Logging](docs/operations/monitoring.md)
+- [Cost Optimization](docs/cost-optimization.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Production Checklist](docs/production-checklist.md)
+
+---
+
+## Resources
+
+**Official Documentation:**
+- [Telegram Bot API](https://core.telegram.org/bots/api)
+- [Telegram Web Apps](https://core.telegram.org/bots/webapps)
+- [Google Cloud Run Docs](https://cloud.google.com/run/docs)
+- [Cloud Storage Guide](https://cloud.google.com/storage/docs)
+
+**Related Projects:**
+- [Telegraf.js](https://telegraf.js.org/) — Bot framework used in this template
+- [React Documentation](https://react.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+**Community:**
+- [Telegram Bot Developers](https://t.me/botdevelopers)
+- [Google Cloud Community](https://www.googlecloudcommunity.com/)
+
+---
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) file.
 
-## Support
+## Contributing
 
-- Check the [documentation](docs/)
-- Review troubleshooting sections
-- Open an issue for bugs or questions
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+**Questions or Issues?** Open an issue on GitHub or check [existing discussions](---).
